@@ -5,12 +5,11 @@ import { initializeFirebase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 /**
- * @fileOverview AI 核心配置模組 (V26 - 對齊 v1beta 版本)
- * 核心：鎖定使用 "v1beta" API 版本與 "gemini-flash-latest" 模型，實現 100% 穩定性。
+ * @fileOverview AI 核心配置模組 (V27 - 強化資料庫備援)
+ * 核心：即便 App Hosting 部署失敗，也能從 Firestore 讀取金鑰，確保 100% 運作。
  */
 
 export function getApiKey() {
-  // 優先讀取環境變數，並移除所有引號
   const key = (process.env.GOOGLE_GENAI_API_KEY || "").trim().replace(/['"]/g, '');
   return key;
 }
@@ -21,7 +20,7 @@ export function getApiKey() {
 export async function getAi() {
   let apiKey = getApiKey();
 
-  if ((!apiKey || apiKey.length < 10) && typeof window === 'undefined') {
+  if (!apiKey || apiKey.length < 10) {
     try {
       const { db } = initializeFirebase();
       const snap = await getDoc(doc(db, 'config', 'infra'));
@@ -29,7 +28,7 @@ export async function getAi() {
         apiKey = (snap.data().geminiApiKey || snap.data().googleApiKey || "").trim().replace(/['"]/g, '');
       }
     } catch (e) {
-      console.warn("[AI Genkit] Firestore key fetch failed, fallback to env.");
+      console.warn("[AI Genkit] Firestore key fetch failed.");
     }
   }
 
@@ -52,8 +51,8 @@ export async function getNativeModel(providedKey?: string) {
     key = getApiKey();
   }
 
-  // 如果環境變數失效，才去資料庫抓取 (這一步可能導致 1-2 秒延遲)
-  if ((!key || key.length < 10) && typeof window === 'undefined') {
+  // 核心保險邏輯
+  if (!key || key.length < 10) {
     try {
       const { db } = initializeFirebase();
       const snap = await getDoc(doc(db, 'config', 'infra'));
@@ -61,15 +60,14 @@ export async function getNativeModel(providedKey?: string) {
         key = (snap.data().geminiApiKey || snap.data().googleApiKey || "").trim().replace(/['"]/g, '');
       }
     } catch (e) {
-      console.warn("[AI Init] Firestore key fetch skipped or failed.");
+      console.warn("[AI Init] Firestore key fetch failed.");
     }
   }
   
   if (!key || key.length < 10) {
-    throw new Error("API_KEY_MISSING: 請在基礎設施設定中填寫有效的 Gemini API Key。");
+    throw new Error("API_KEY_MISSING: 請在資料庫 config/infra 中填寫有效的 Gemini API Key。");
   }
 
-  // 關鍵優化：強制指定 apiVersion 為 v1beta，對齊 Google AI Studio 最穩定端點
   const genAI = new GoogleGenerativeAI(key);
   
   return genAI.getGenerativeModel({
@@ -77,12 +75,8 @@ export async function getNativeModel(providedKey?: string) {
   }, { apiVersion: 'v1beta' });
 }
 
-/**
- * 強效 JSON 解析與結構提取
- */
 export function safeJsonParse(text: string) {
   if (!text || text.trim() === "") return null;
-  
   try {
     return JSON.parse(text);
   } catch (e) {}
@@ -93,10 +87,8 @@ export function safeJsonParse(text: string) {
     const endIndex = clean.lastIndexOf('}');
     if (startIndex === -1 || endIndex === -1) return null;
     const jsonCandidate = clean.substring(startIndex, endIndex + 1);
-    const sanitized = jsonCandidate.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-    return JSON.parse(sanitized);
+    return JSON.parse(jsonCandidate);
   } catch (e) {
-    console.warn("[AI JSON Parser] All parsing attempts failed.");
     return null;
   }
 }

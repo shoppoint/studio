@@ -6,39 +6,38 @@ import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * @fileOverview 後端 Email 發送 API (Resend 高性能模式)
- * 策略：1. 優先讀取環境變數 (App Hosting) 2. 備援讀取資料庫
+ * 策略：1. 優先讀取環境變數 2. 絕對備援：從 Firestore 讀取 (解決部署變數缺失問題)
  */
 
 export async function POST(request: Request) {
   try {
-    const { to, subject, html, bcc, config } = await request.json();
+    const { to, subject, html, bcc, config: clientConfig } = await request.json();
     const { db } = initializeFirebase();
 
-    // 1. 優先讀取環境變數 (效能最快)
+    // 1. 嘗試從環境變數讀取
     let apiKey = (process.env.RESEND_API_KEY || "").trim().replace(/['"]/g, '');
+    let finalConfig = clientConfig;
 
-    // 2. 備援：從 Firestore 讀取
+    // 2. 核心保險：如果環境變數缺失，強制從 Firestore 抓取
     if (!apiKey || apiKey.length < 10) {
-      try {
-        const configSnap = await getDoc(doc(db, 'config', 'communication'));
-        apiKey = (configSnap.data()?.resendApiKey || "").trim().replace(/['"]/g, '');
-      } catch (e) {
-        console.error("[API Email] Firestore key fetch failed:", e);
+      const configSnap = await getDoc(doc(db, 'config', 'communication'));
+      if (configSnap.exists()) {
+        const data = configSnap.data();
+        apiKey = (data.resendApiKey || "").trim().replace(/['"]/g, '');
+        // 如果傳進來的 config 為空，也補齊它
+        if (!finalConfig) finalConfig = data.email;
       }
     }
 
     if (!apiKey || apiKey.length < 10) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Email API Key is missing. Please check App Hosting Secrets or Admin Settings." 
-      }, { status: 500 });
+      throw new Error("EMAIL_API_KEY_MISSING: 請在 App Hosting 環境變數或 Firestore 通訊設定中配置 Resend Key。");
     }
 
     const resend = new Resend(apiKey);
 
     // 獲取發件人配置
-    const fromName = config?.fromName || "SHOP POINT";
-    let fromEmail = (config?.user || "info@shoppoint.hk").trim().toLowerCase();
+    const fromName = finalConfig?.fromName || "SHOP POINT";
+    let fromEmail = (finalConfig?.user || "info@shoppoint.hk").trim().toLowerCase();
     
     // 安全過濾：確保發件網域已驗證
     if (fromEmail.includes("gmail.com")) fromEmail = "info@shoppoint.hk"; 
@@ -62,6 +61,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, messageId: data?.id });
 
   } catch (error: any) {
+    console.error("[API Email Error]", error.message);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
