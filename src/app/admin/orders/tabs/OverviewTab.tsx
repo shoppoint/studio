@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 /**
- * 訂單詳情 - 概覽分頁 (V26 穩定版 - 強制防止 Select 空值)
+ * 訂單詳情 - 概覽分頁 (V27 穩定版 - 確保 Select 始終具備 Value)
  */
 export function OverviewTab({ 
   order, locations, isEditMode, fulfillmentStatus, setFulfillmentStatus, 
@@ -66,11 +66,10 @@ export function OverviewTab({
   }, [fulfillmentLocationId, locations, lang]);
 
   const dateStr = order?.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'yyyy-MM-dd HH:mm:ss') : "--";
-  const awardDateStr = order?.pointsAwardedAt?.seconds ? format(new Date(order.pointsAwardedAt.seconds * 1000), 'yyyy-MM-dd HH:mm:ss') : null;
 
   const handleManualSync = async () => {
     if (!order?.id || !db) return;
-    if (!fulfillmentLocationId) {
+    if (!fulfillmentLocationId || fulfillmentLocationId === 'none') {
       toast({ title: "請先設定履約分店", variant: "destructive" });
       return;
     }
@@ -89,6 +88,7 @@ export function OverviewTab({
         const productSnaps = await Promise.all(productRefs.map(ref => transaction.get(ref)));
         const webHub = locations?.find((l: any) => l.isDefaultFulfillmentSource);
         const defaultHubId = webHub?.id;
+
         for (let i = 0; i < productIds.length; i++) {
           const pSnap = productSnaps[i];
           if (!pSnap.exists()) continue;
@@ -188,7 +188,7 @@ export function OverviewTab({
             <div className="grid gap-4">
               <Label className="text-[10px] font-black uppercase opacity-60">庫存同步狀態</Label>
               <div className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-muted-foreground/10 space-y-4">
-                {order?.inventorySyncStatus === 'success' ? <Badge className="bg-green-500 text-white border-none font-black h-9 px-6 rounded-2xl gap-2 shadow-md"><CheckCircle2 className="h-4 w-4" /> Synchronized</Badge> : <Button onClick={handleManualSync} disabled={isSyncing || !fulfillmentLocationId} className="rounded-xl font-bold bg-orange-600 text-white shadow-lg gap-2 px-6">{isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />} 重新嘗試同步</Button>}
+                {order?.inventorySyncStatus === 'success' ? <Badge className="bg-green-500 text-white border-none font-black h-9 px-6 rounded-2xl gap-2 shadow-md"><CheckCircle2 className="h-4 w-4" /> Synchronized</Badge> : <Button onClick={handleManualSync} disabled={isSyncing || !fulfillmentLocationId || fulfillmentLocationId === 'none'} className="rounded-xl font-bold bg-orange-600 text-white shadow-lg gap-2 px-6">{isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />} 重新嘗試同步</Button>}
               </div>
             </div>
           </div>
