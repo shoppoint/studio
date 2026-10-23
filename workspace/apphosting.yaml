@@ -1,16 +1,7 @@
+# 同步清理：移除所有變數定義以防止路徑衝突導致的建置失敗。
 runConfig:
   cpu: 1
   memoryMiB: 1024
   minInstances: 0
   maxInstances: 10
   concurrency: 40
-
-env:
-  - variable: DEPLOYMENT_MARKER
-    value: "STABLE_V28_BUILD"
-    availability:
-      - RUNTIME
-  - variable: RESEND_API_KEY
-    secret: RESEND_API_KEY
-  - variable: GOOGLE_GENAI_API_KEY
-    secret: GOOGLE_GENAI_API_KEY
