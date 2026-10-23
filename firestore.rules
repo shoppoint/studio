@@ -1,0 +1,102 @@
+
+rules_version = '2';
+
+/**
+ * @fileOverview Firestore 安全性規則 - 穩定接力版
+ * 策略：允許前端（及 Server Action 的 Client SDK）建立訂單。
+ * 庫存與積分敏感操作由背景 Cloud Functions 完成。
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isPlatformAdmin() {
+      return isSignedIn() && (
+        request.auth.token.get('email', '').lower() in ['shoppoint.hk@gmail.com', 'bsconcept.hk@gmail.com']
+      );
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'Guest');
+    }
+
+    function isStaff() {
+      return isPlatformAdmin() || getRole() in ['ShopManager', 'Superadmin'];
+    }
+
+    // 全域管理員權限
+    match /{allPaths=**} {
+      allow read, write: if isPlatformAdmin();
+    }
+
+    // 產品規則：禁止瀏覽器直接修改庫存
+    match /public_products/{productId} {
+      allow read: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['addedToCartCount', 'updatedAt', 'embedding', 'embeddingUpdatedAt']) || isStaff();
+      allow write: if isStaff();
+      
+      match /reviews/{id} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow delete: if isStaff();
+      }
+    }
+    
+    // 訂單規則：核心加固
+    match /orders/{orderId} {
+      allow create: if true; 
+      allow get: if true; 
+      allow list: if isStaff() || (isSignedIn() && resource.data.customerId == request.auth.uid); 
+      allow update: if isStaff() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isConfirmed', 'updatedAt']) &&
+        request.resource.data.isConfirmed == true
+      ); 
+    }
+
+    // 促銷與行銷規則 (修正：允許所有人讀取)
+    match /promotions/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    
+    match /config/marketing_rewards {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // 用戶資料規則
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow list: if isStaff();
+      
+      match /bookmarks/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /coupons/{id} { allow read: if isSignedIn() && request.auth.uid == userId; allow write: if isStaff(); }
+      match /notifications/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+    }
+
+    // 內容與配置
+    match /articles/{articleId} { allow read: if true; allow write: if isStaff(); }
+    match /brands/{id} { allow read: if true; allow write: if isStaff(); }
+    match /categories/{id} { allow read: if true; allow write: if isStaff(); }
+    match /config/{id} { allow read: if true; allow write: if isStaff(); }
+    match /notification_templates/{id} { allow read: if true; allow write: if isStaff(); }
+    match /locations/{id} { allow read: if true; allow write: if isStaff(); }
+    
+    // 輔助功能
+    match /enquiries/{id} { allow create: if true; allow read, write: if isStaff(); }
+    match /stock_alerts/{id} { allow read, create: if true; allow write: if isStaff(); }
+    
+    // 遺棄購物車：開放背景寫入，限制讀取權限以保護隱私
+    match /abandoned_carts/{id} { 
+      allow create, update: if true; 
+      allow get: if isStaff() || (isSignedIn() && (resource == null || resource.data.customer.uid == request.auth.uid));
+      allow list: if isStaff();
+    }
+  }
+}

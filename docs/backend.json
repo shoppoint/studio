@@ -1,0 +1,35 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Information about a user registered in the system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["Customer", "Vendor", "ShopManager", "Superadmin", "Guest"] },
+        "points": { "type": "number" },
+        "status": { "type": "string", "enum": ["Active", "Suspended"] },
+        "signInProvider": { "type": "string", "description": "Method used to sign in (google.com, password, etc.)" },
+        "referralCode": { "type": "string", "description": "Unique 6-digit code for inviting friends" },
+        "referredBy": { "type": "string", "description": "UID of the user who invited this person" },
+        "referrerName": { "type": "string", "description": "Name of the inviter" },
+        "referralCount": { "type": "number", "description": "Total number of friends successfully invited" },
+        "isReferralOrderBonusGiven": { "type": "boolean", "description": "Whether the inviter has received points for this user's first order" },
+        "isWelcomePointsAwarded": { "type": "boolean", "description": "Whether the new user has received their initial registration points" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Users profile data"
+    }
+  }
+}

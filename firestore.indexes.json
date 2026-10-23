@@ -1,0 +1,154 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isVisible",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayOrder",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "public_products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "public_products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "addedToCartCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "public_products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "price",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "public_products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "salePrice",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "public_products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "customerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "public_products",
+      "fieldPath": "description_zh",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_products",
+      "fieldPath": "description_en",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_products",
+      "fieldPath": "longDescription_zh",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_products",
+      "fieldPath": "longDescription_en",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "articles",
+      "fieldPath": "content",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "articles",
+      "fieldPath": "zh",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "articles",
+      "fieldPath": "en",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "enquiries",
+      "fieldPath": "message",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "orders",
+      "fieldPath": "internalNotes",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "promotions",
+      "fieldPath": "publicSummary",
+      "indexes": []
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "firestore": [
+    {
+      "database": "shoppoint-hk",
+      "location": "asia-east1",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    }
+  ],
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" install"
+      ]
+    }
+  ],
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      ".next/cache/**",
+      ".next/server/chunks/**",
+      ".npm/**",
+      "functions/node_modules/**",
+      "firebase-debug.log*",
+      "package-lock.json",
+      "*.map",
+      ".next/static/chunks/**",
+      ".next/standalone/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "asia-east1"
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

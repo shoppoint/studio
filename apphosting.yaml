@@ -1,0 +1,10 @@
+runConfig:
+  cpu: 1
+  memoryMiB: 1024
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 40
+
+# 注意：為了避開 IAM 權限錯誤，我們不在此處定義祕鑰。
+# 請直接在 Firebase Console > App Hosting > 設定 > 環境變數中，
+# 以「純文字 (Plain Text)」方式新增 RESEND_API_KEY 和 GOOGLE_GENAI_API_KEY。

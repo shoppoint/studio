@@ -1,0 +1,106 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Modern minimalist shopping background",
+      "imageUrl": "https://picsum.photos/seed/123/1920/1080",
+      "imageHint": "lifestyle commerce"
+    },
+    {
+      "id": "tech-gadgets",
+      "description": "Premium electronics and gadgets",
+      "imageUrl": "https://picsum.photos/seed/tech/600/600",
+      "imageHint": "laptop headphones"
+    },
+    {
+      "id": "fashion-apparel",
+      "description": "Contemporary fashion clothing",
+      "imageUrl": "https://picsum.photos/seed/fashion/600/600",
+      "imageHint": "fashion clothes"
+    },
+    {
+      "id": "home-living",
+      "description": "Minimalist home decor and furniture",
+      "imageUrl": "https://picsum.photos/seed/home/600/600",
+      "imageHint": "furniture interior"
+    },
+    {
+      "id": "beauty-care",
+      "description": "Skincare and beauty products",
+      "imageUrl": "https://picsum.photos/seed/beauty/600/600",
+      "imageHint": "skincare cosmetic"
+    },
+    {
+      "id": "product-1",
+      "description": "Sleek Headphones",
+      "imageUrl": "https://picsum.photos/seed/p1/400/500",
+      "imageHint": "headphones"
+    },
+    {
+      "id": "product-2",
+      "description": "Minimalist Watch",
+      "imageUrl": "https://picsum.photos/seed/p2/400/500",
+      "imageHint": "watch"
+    },
+    {
+      "id": "product-3",
+      "description": "Designer Lamp",
+      "imageUrl": "https://picsum.photos/seed/p3/400/500",
+      "imageHint": "lamp"
+    },
+    {
+      "id": "product-4",
+      "description": "Ergonomic Chair",
+      "imageUrl": "https://picsum.photos/seed/p4/400/500",
+      "imageHint": "chair"
+    },
+    {
+      "id": "vendor-profile",
+      "description": "Professional vendor avatar",
+      "imageUrl": "https://picsum.photos/seed/vendor/200/200",
+      "imageHint": "professional avatar"
+    },
+    {
+      "id": "sf-logo",
+      "description": "SF Express Official Logo",
+      "imageUrl": "/sf-logo.png",
+      "imageHint": "sf express"
+    },
+    {
+      "id": "hkpost-logo",
+      "description": "Hong Kong Post Official Logo",
+      "imageUrl": "/hkpost-logo.png",
+      "imageHint": "hong kong post"
+    },
+    {
+      "id": "payme-qr",
+      "description": "PayMe Official QR Code",
+      "imageUrl": "/payme-qr.png",
+      "imageHint": "payme qr"
+    },
+    {
+      "id": "yedpay-qr",
+      "description": "Yedpay Official QR Code",
+      "imageUrl": "/yedpay-qr.png",
+      "imageHint": "yedpay qr"
+    },
+    {
+      "id": "octopus-qr",
+      "description": "Octopus Official QR Code",
+      "imageUrl": "/octopus-qr.png",
+      "imageHint": "octopus qr"
+    },
+    {
+      "id": "about-trust",
+      "description": "Warm interaction showing trust and connection",
+      "imageUrl": "https://picsum.photos/seed/trust/1200/800",
+      "imageHint": "trust warm"
+    },
+    {
+      "id": "about-sourcing",
+      "description": "Global sourcing and attention to details",
+      "imageUrl": "https://picsum.photos/seed/source/1200/800",
+      "imageHint": "curated goods"
+    }
+  ]
+}
