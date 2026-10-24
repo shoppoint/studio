@@ -1,7 +1,7 @@
 {
   "name": "SHOP POINT | 優質生活精品",
   "short_name": "SHOP POINT",
-  "description": "穿梭世界各地尋找優質良品，願能細心打理您的生活所需。",
+  "description": "穿梭世界各地尋找優質良品，打理您的生活所需。",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

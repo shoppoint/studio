@@ -1,5 +1,5 @@
-# SHOP POINT - App Hosting 性能與成本優化配置
-# 1 CPU + 1GB RAM 是 Next.js 商城的最佳平衡點
+# SHOP POINT - App Hosting 生產環境平衡配置
+# 1 CPU + 1GB RAM 是 Next.js 商城的最佳效能與成本甜點位
 runConfig:
   cpu: 1
   memoryMiB: 1024
