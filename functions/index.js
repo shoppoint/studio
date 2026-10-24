@@ -273,8 +273,6 @@ function renderEmailHtml(blocks, context) {
 /**
  * 【1. handleOrderCreated】
  * 職責：僅執行庫存扣減。
- * 修正：移除自愈邏輯。若未過期批次紀錄不足，直接拋出錯誤並停止同步。
- * FEFO 原則：優先扣除最早到期但未過期的批次。
  */
 exports.handleOrderCreated = onDocumentCreated({
   document: "orders/{orderId}",
@@ -284,7 +282,6 @@ exports.handleOrderCreated = onDocumentCreated({
   const orderId = event.params.orderId;
   const orderData = event.data.data();
   const db = getDb();
-  // 香港時區零時
   const todayStr = new Date(new Date().getTime() + 8 * 3600000).toISOString().split('T')[0];
 
   if (orderData.inventorySyncStatus === 'success') return;
@@ -316,7 +313,6 @@ exports.handleOrderCreated = onDocumentCreated({
         let batches = Array.isArray(pData.batches) ? [...pData.batches] : [];
         let rem = qtyToDeduct;
         
-        // 核心：僅從「未過期」批次中扣除，且按效期升序排序 (FEFO)
         const validLocalBatches = batches
           .filter(b => b.locationId === locId && (!b.expiryDate || b.expiryDate >= todayStr))
           .sort((a, b) => (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999"));
@@ -330,12 +326,8 @@ exports.handleOrderCreated = onDocumentCreated({
           }
         }
         
-        // 核心修正：移除補正邏輯。若 rem > 0 代表未過期批次不足。
-        if (rem > 0) {
-          throw new Error(`Insufficient unexpired stock for ${pData.productName_zh || itemIds[i]} at ${locId}`);
-        }
+        if (rem > 0) throw new Error(`Insufficient unexpired stock for ${pData.productName_zh || itemIds[i]} at ${locId}`);
 
-        // 重新計算總庫存與地點庫存（嚴格排除過期項目）
         const sellableTotalStock = batches.filter(b => !b.expiryDate || b.expiryDate >= todayStr).reduce((acc, b) => acc + (Number(b.quantity) || 0), 0);
         const sellableLocStock = batches.filter(b => b.locationId === locId && (!b.expiryDate || b.expiryDate >= todayStr)).reduce((acc, b) => acc + (Number(b.quantity) || 0), 0);
         
@@ -353,7 +345,6 @@ exports.handleOrderCreated = onDocumentCreated({
 
 /**
  * 【2. handleOrderUpdate】
- * 修正：補足 BCC 管理員功能，並嚴格確保僅 Web 訂單觸發電郵。
  */
 exports.handleOrderUpdate = onDocumentUpdated({
   document: "orders/{orderId}",
@@ -366,7 +357,7 @@ exports.handleOrderUpdate = onDocumentUpdated({
   const db = getDb();
   const todayStr = new Date(new Date().getTime() + 8 * 3600000).toISOString().split('T')[0];
 
-  // 1. 訂單確認發信 (BCC 版)
+  // 1. 訂單確認發信
   if (!before.isConfirmed && after.isConfirmed && after.sourceType === 'Web') {
     try {
       const { Resend } = require("resend");
@@ -385,7 +376,6 @@ exports.handleOrderUpdate = onDocumentUpdated({
         const langKey = (after.lang || 'zh').startsWith('en') ? 'en' : 'zh';
         const content = tempSnap.exists ? (tempSnap.data()[langKey] || tempSnap.data()['zh'] || {}) : {};
         const context = getNotificationContext(after, genSnap.data(), langKey);
-        
         const bccList = bcc ? [bcc] : undefined;
 
         await resend.emails.send({ 
@@ -399,7 +389,7 @@ exports.handleOrderUpdate = onDocumentUpdated({
     } catch (e) { logger.error(`[FirstEmail Error] ${orderId}:`, e.message); }
   }
 
-  // 2. 付款成功發信 (BCC 版)
+  // 2. 付款成功發信
   if (before.paymentStatus !== 'paid' && after.paymentStatus === 'paid' && after.sourceType === 'Web') {
     await db.collection('orders').doc(orderId).update({ fulfillmentStatus: 'processing', updatedAt: FieldValue.serverTimestamp() });
     try {
@@ -419,7 +409,6 @@ exports.handleOrderUpdate = onDocumentUpdated({
         const langKey = (after.lang || 'zh').startsWith('en') ? 'en' : 'zh';
         const content = tempSnap.exists ? (tempSnap.data()[langKey] || tempSnap.data()['zh'] || {}) : {};
         const context = getNotificationContext(after, genSnap.data(), langKey);
-        
         const bccList = bcc ? [bcc] : undefined;
 
         await resend.emails.send({ 
@@ -467,22 +456,54 @@ function replaceVariables(text, context) {
   });
 }
 
+/**
+ * 【Yedpay Webhook 端點】
+ * 修正：加入訂單狀態守衛。若訂單已處於「已取消」或「已退款」狀態，則忽略來自網關的「已支付」覆蓋請求。
+ */
 exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, res) => {
   let body = req.body || {};
   if (Buffer.isBuffer(body)) { try { body = JSON.parse(body.toString()); } catch (e) {} }
   const customId = findValueByKey(body, 'custom_id');
   const status = findValueByKey(body, 'status');
+  
   if (customId && String(status).toLowerCase() === 'paid') {
     const db = getDb();
     const orderRef = db.collection('orders').doc(String(customId));
     const snap = await orderRef.get();
+    
     if (snap.exists) {
       const data = snap.data();
-      if (data.paymentStatus === 'paid') return res.status(200).send("ALREADY_PAID");
+      
+      // 核心守衛：如果訂單已經是「已付款」，直接回傳
+      if (data.paymentStatus === 'paid') {
+        return res.status(200).send("ALREADY_PAID");
+      }
+
+      // 核心守衛：如果訂單已經處於「已取消」或「已退款」狀態，攔截 Webhook 的自動恢復
+      if (data.status === 'cancelled' || data.paymentStatus === 'refunded') {
+        const timestamp = new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
+        const logEntry = `\n[${timestamp}] [Yedpay Webhook] 收到付款訊號但已攔截 (原因：訂單已處於最終狀態 ${data.status}/${data.paymentStatus})`;
+        await orderRef.update({ 
+          internalNotes: (data.internalNotes || "") + logEntry,
+          updatedAt: FieldValue.serverTimestamp()
+        });
+        return res.status(200).send("ORDER_ALREADY_TERMINATED");
+      }
+
       const timestamp = new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
       const logEntry = `\n[${timestamp}] [Yedpay Webhook] 成功接收付款訊號 (Status: ${status})`;
-      await orderRef.update({ paymentStatus: 'paid', isConfirmed: true, internalNotes: (data.internalNotes || "") + logEntry, updatedAt: FieldValue.serverTimestamp() });
+      
+      await orderRef.update({ 
+        paymentStatus: 'paid', 
+        isConfirmed: true, 
+        internalNotes: (data.internalNotes || "") + logEntry, 
+        updatedAt: FieldValue.serverTimestamp() 
+      });
       res.status(200).send("OK");
-    } else res.status(404).send("Order Not Found");
-  } else res.status(200).send("Ignored");
+    } else {
+      res.status(404).send("Order Not Found");
+    }
+  } else {
+    res.status(200).send("Ignored");
+  }
 });
