@@ -22,26 +22,6 @@
       ]
     }
   ],
-  "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      ".next/cache/**",
-      ".next/server/chunks/**",
-      ".npm/**",
-      "functions/node_modules/**",
-      "firebase-debug.log*",
-      "package-lock.json",
-      "*.map",
-      ".next/static/chunks/**",
-      ".next/standalone/node_modules/**"
-    ],
-    "frameworksBackend": {
-      "region": "asia-east1"
-    }
-  },
   "storage": {
     "rules": "storage.rules"
   }
