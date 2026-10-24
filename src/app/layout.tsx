@@ -44,6 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: "穿梭世界各地尋找優質良品，願能細心打理您的生活所需，使溫暖的購物體驗與經營初心得以延續。",
     metadataBase: new URL('https://shoppoint.hk'),
+    manifest: '/manifest.json',
     icons: { 
       icon: '/favicon.ico',
       apple: '/logo.png',

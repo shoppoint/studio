@@ -1,8 +1,7 @@
-                                                                                                       
 {
-  "name": "SHOP POINT | Premium Multi-Vendor Marketplace",
+  "name": "SHOP POINT | 優質生活精品",
   "short_name": "SHOP POINT",
-  "description": "The ultimate marketplace for quality products from verified vendors across the globe.",
+  "description": "穿梭世界各地尋找優質良品，願能細心打理您的生活所需。",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -11,12 +10,14 @@
     {
       "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
