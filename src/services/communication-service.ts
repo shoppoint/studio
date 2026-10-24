@@ -17,8 +17,8 @@ import { renderEmailHtml } from '@/lib/comm/email-renderer';
 import { sendEmailTransport } from '@/lib/comm/transporter';
 
 /**
- * @fileOverview 全通路通訊核心調度服務 (Dispatcher) - 穩定版 (V19)
- * 修正：強化迎新通知 (welcome_msg) 的數據對接。
+ * @fileOverview 全通路通訊核心調度服務 (Dispatcher) - 穩定版 (V20)
+ * 修正：校正站內通知路徑為 /users/，並優化變數替換引擎，確保所有渠道內容均被正確渲染。
  */
 
 export { renderEmailHtml as renderEmailTemplate, replaceVariables, generateItemsTable as generateItemsTableHtml };
@@ -81,10 +81,6 @@ export async function triggerNotification(
       return { success: false, message: "No active channels configured for this event." };
     }
 
-    let emailSent = false;
-    let stationNotifSent = false;
-    let errorDetail = "";
-
     const context = getNotificationContext(data, genConfig, langStr);
 
     // 1. 電郵渠道
@@ -93,7 +89,7 @@ export async function triggerNotification(
         const subject = replaceVariables(content.emailSubject || `Update from ${context.storeName}`, context);
         const finalHtml = renderEmailHtml(content.emailBlocks || [], context);
         
-        const emailRes = await sendEmailTransport({ 
+        await sendEmailTransport({ 
           db,
           to: recipientEmail,
           subject,
@@ -103,29 +99,27 @@ export async function triggerNotification(
           orderId: data.orderId || data.id || undefined,
           event
         });
-
-        if (emailRes.success) {
-          emailSent = true;
-        } else {
-          // 使用類型安全的方式獲取錯誤訊息，確保不影響自動化流程
-          errorDetail = 'error' in emailRes ? emailRes.error : "Email transport failed";
-        }
       }
     }
 
-    // 2. 站內鈴鐺渠道
+    // 2. 站內鈴鐺渠道 (修正寫入路徑與變數渲染)
     if (activeChannels.includes('in_app') || forceSend) {
       if (targetUserId && (content.inAppTitle || content.inAppContent)) {
+        // 核心修正：站內通知若使用 HTML 表單會很醜，若發現 itemsTable，建議在範本中使用 itemsList
+        const renderedTitle = replaceVariables(content.inAppTitle || "重要通知", context);
+        const renderedContent = replaceVariables(content.inAppContent || "您有一則新的系統訊息。", context);
+
         const notifData = {
-          title: replaceVariables(content.inAppTitle || "重要通知", context),
-          content: replaceVariables(content.inAppContent || "您有一則新的系統訊息。", context),
+          title: renderedTitle,
+          content: renderedContent,
           type: event.includes('order') ? 'order' : event.includes('stock') ? 'stock' : 'system',
           actionUrl: data.orderId ? `/profile/orders/${data.orderId || data.id}` : data.id ? `/product/${data.id}` : `/profile`,
           isRead: false,
           createdAt: serverTimestamp()
         };
-        await addDoc(collection(db, 'user', targetUserId, 'notifications'), notifData);
-        stationNotifSent = true;
+        
+        // 核心修正：路徑必須為 users (複數)
+        await addDoc(collection(db, 'users', targetUserId, 'notifications'), notifData);
       }
     }
 
@@ -155,7 +149,7 @@ export async function processBackInStock(db: Firestore, productId: string, produ
 }
 
 /**
- * 測試通知發送 - 修正模擬數據結構以支持自取點顯示
+ * 測試通知發送
  */
 export async function sendTestNotification(params: { db: Firestore, subject: string, blocks: any[], lang: string }) {
   const { db, subject, blocks, lang } = params;

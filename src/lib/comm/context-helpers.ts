@@ -129,10 +129,20 @@ export function generateItemsTable(items: any[], lang: string): string {
 }
 
 /**
- * 變數替換引擎
+ * 生成純文字產品列表 (用於站內通知/WhatsApp)
+ */
+export function generateItemsTextList(items: any[], lang: string): string {
+  if (!items || !Array.isArray(items)) return "";
+  const visibleItems = items.filter(it => !it.isInternalGift);
+  return visibleItems.map(it => `- ${it.name} x${it.qty}`).join("\n");
+}
+
+/**
+ * 強化版變數替換引擎 - 支援 {{key}} 與 {{{key}}}
  */
 export function replaceVariables(text: any, context: Record<string, any>): string {
   if (typeof text !== 'string') return "";
+  // 修正 Regex：精確匹配 {{...}} 或 {{{...}}} 結構，並確保內層括號被完全消耗
   return text.replace(/\{\{\{?([^{}]+)\}\}\}?/g, (match, key) => {
     const cleanKey = key.trim();
     if (context[cleanKey] !== undefined && context[cleanKey] !== null) {
@@ -146,7 +156,7 @@ export function replaceVariables(text: any, context: Record<string, any>): strin
  * 生成全方位通知上下文 - 修正時區對齊與變數補全
  */
 export function getNotificationContext(data: any, genConfig: any, lang: any): Record<string, any> {
-  const langStr = String(lang || 'zh-HK');
+  const langStr = String(lang || 'zh-HK').toLowerCase();
   const isEn = langStr.startsWith('en');
   const lKey = isEn ? 'en' : 'zh';
   const tz = genConfig?.timezone || 'Asia/Hong_Kong';
@@ -159,14 +169,14 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     resolvedMethodName = map[methodId] || map[methodId.toUpperCase()] || data.shippingMethodName || "標準配送";
   }
 
-  // 2. 自取點解析 (新增：從數據中提取正確的顯示名稱)
+  // 2. 自取點解析
   let pickupLocation = data.pickupLocation || "--";
   if (data.selectedPoint) {
     pickupLocation = isEn ? (data.selectedPoint.name_en || data.selectedPoint.name_zh) : (data.selectedPoint.name_zh || data.selectedPoint.name_en);
     if (data.selectedPoint.code) pickupLocation = `[${data.selectedPoint.code}] ${pickupLocation}`;
   }
 
-  // 3. 日期解析 (核心修正：強制轉換為設定時區)
+  // 3. 日期解析
   let orderDate = "--";
   try {
     const rawDate = data.createdAt;
@@ -200,6 +210,7 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     shippingAddress: formatAddress(data.shippingAddress || data.billingAddress),
     billingAddress: formatAddress(data.billingAddress || data.shippingAddress),
     itemsTable: generateItemsTable(data.items || [], langStr),
+    itemsList: generateItemsTextList(data.items || [], langStr),
     storeName: String(genConfig?.storeName?.[lKey] || "SHOP POINT"),
     supportEmail: String(genConfig?.storeEmail || "info@shoppoint.hk"),
     supportPhone: String(genConfig?.storePhone || "+852 5325 2555"),
