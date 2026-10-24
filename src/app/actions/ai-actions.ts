@@ -3,9 +3,9 @@
 import { getNativeModel } from "@/ai/genkit";
 
 /**
- * @fileOverview AI 服務連線測試與診斷 Action (V8 - 最終加固版)
+ * @fileOverview AI 服務連線測試與診斷 Action (V9 - 靜默診斷強化版)
  * 職責：執行背景預熱並回傳診斷資訊。
- * 修正：確保任何錯誤都被捕獲，不向上拋出以避免觸發 Next.js 500 錯誤頁面。
+ * 修正：確保任何錯誤都被捕獲並以 success: false 形式回傳，防止觸發 Next.js 500 錯誤。
  */
 
 export async function testGeminiKeyAction(apiKey: string) {
@@ -82,10 +82,11 @@ export async function getAiStatusAction() {
       }
     };
   } catch (error: any) {
-    // 關鍵修正：即使發生嚴重錯誤也回傳 JSON 而非拋出異常，防止日誌出現 500 Error
+    // 關鍵修正：回傳 JSON 而非拋出異常，防止 App Hosting 日誌出現 500 Error
+    console.warn("[AI Status Action] Silent error handled:", error.message);
     return { 
       success: false, 
-      message: "AI 服務預熱失敗 (Silent Failure)",
+      message: "AI 服務診斷目前不可用",
       detail: error.message
     };
   }

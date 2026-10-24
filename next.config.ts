@@ -61,6 +61,12 @@ const nextConfig: NextConfig = {
         destination: '/shop',
         permanent: true,
       },
+      // 額外加固：處理舊版 Odoo 路徑的重定向 (例如 /web/static, /web/image)
+      {
+        source: '/web/:path*',
+        destination: '/shop',
+        permanent: true,
+      },
       {
         source: '/order-tracking',
         destination: '/faq',
