@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // 處理舊版 WordPress 路徑的重定向至商店
+      // 處理舊版 WordPress 路徑的重定向至商店，消除 404 錯誤
       {
         source: '/wp-content/:path*',
         destination: '/shop',
@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
         destination: '/shop',
         permanent: true,
       },
-      // 處理舊版 Odoo 路徑的重定向
+      // 處理舊版 Odoo 路徑的重定向，消除 404 錯誤
       {
         source: '/web/:path*',
         destination: '/shop',

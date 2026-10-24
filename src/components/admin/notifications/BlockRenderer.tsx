@@ -110,7 +110,7 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
       return (
         <div className="px-6 py-4 space-y-2 text-left">
           {data.title && <h2 className="text-2xl font-black">{data.title}</h2>}
-          <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{data.content || data.msg}</div>
+          <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">${replaceVariables(data.content || data.msg || "", context)}</div>
         </div>
       );
     case 'order_status_tracker':
@@ -143,11 +143,11 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
       return wrap(
         <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex justify-between items-center text-left">
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">{labels.order_id}</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">${labels.order_id}</p>
             <p className="text-xl font-black m-0">{"{{orderId}}"}</p>
           </div>
           <div className="text-right space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">{labels.date}</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">${labels.date}</p>
             <p className="text-sm font-bold text-slate-600 m-0">{"{{orderDate}}"}</p>
           </div>
         </div>
@@ -156,14 +156,14 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
       return (
         <div className="bg-muted/10 p-6 rounded-2xl border border-dashed my-4 mx-4 space-y-4 text-left">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-            <Calculator className="h-3 w-3" /> {labels.summary}
+            <Calculator className="h-3 w-3" /> ${labels.summary}
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>{labels.subtotal}</span><span>$ {"{{subtotal}}"}</span></div>
-            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>{labels.shipping}</span><span>$ {"{{shippingFee}}"}</span></div>
-            <div className="flex justify-between text-xs font-bold text-green-600"><span>{labels.discount}</span><span>-$ {"{{discountAmount}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>${labels.subtotal}</span><span>$ {"{{subtotal}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>${labels.shipping}</span><span>$ {"{{shippingFee}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-green-600"><span>${labels.discount}</span><span>-$ {"{{discountAmount}}"}</span></div>
             <Separator className="my-2" />
-            <div className="flex justify-between text-base font-black"><span>{labels.total}</span><span className="text-primary">$ {"{{totalAmount}}"}</span></div>
+            <div className="flex justify-between text-base font-black"><span>${labels.total}</span><span className="text-primary">$ {"{{totalAmount}}"}</span></div>
           </div>
         </div>
       );
@@ -183,7 +183,7 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
     case 'customer_details':
       return (
         <div className="mx-4 bg-indigo-50 p-6 rounded-2xl border border-indigo-100 my-4 space-y-2 text-left">
-          <p className="text-[10px] font-black uppercase text-indigo-700">{labels.cust_info}</p>
+          <p className="text-[10px] font-black uppercase text-indigo-700">${labels.cust_info}</p>
           <p className="font-bold text-sm">{"{{customerName}}"}</p>
           <p className="text-xs text-indigo-900/60">{"{{customerPhone}}"} • {"{{customerEmail}}"}</p>
         </div>
@@ -192,11 +192,11 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
       return (
         <div className="mx-4 bg-muted/20 p-6 rounded-2xl border my-4 flex justify-between items-center text-left">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase text-muted-foreground">{labels.method}</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground">${labels.method}</p>
             <p className="font-bold text-sm">{"{{shippingMethod}}"}</p>
           </div>
           <div className="text-right space-y-1">
-            <p className="text-[10px] font-black uppercase text-muted-foreground">{labels.tracking}</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground">${labels.tracking}</p>
             <p className="font-mono text-sm font-bold text-primary">{"{{trackingNo}}"}</p>
           </div>
         </div>
@@ -204,7 +204,7 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
     case 'coupon':
       return (
         <div className="mx-4 p-6 border-4 border-dashed border-primary/40 rounded-2xl my-6 text-center space-y-3 bg-primary/5">
-          <p className="text-[10px] font-black uppercase text-primary">{labels.coupon_title}</p>
+          <p className="text-[10px] font-black uppercase text-primary">${labels.coupon_title}</p>
           <h2 className="text-2xl font-black text-primary">{data.discount || "SPECIAL GIFT"}</h2>
           <div className="bg-white px-4 py-2 rounded-lg border inline-block font-mono font-bold text-lg tracking-widest">{"{{couponCode}}"}</div>
         </div>
@@ -212,14 +212,14 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
     case 'products':
       return (
         <div className="mx-4 my-6 space-y-3 text-left">
-          <p className="text-[10px] font-black uppercase text-muted-foreground ml-2">{labels.items_title}</p>
+          <p className="text-[10px] font-black uppercase text-muted-foreground ml-2">${labels.items_title}</p>
           <div className="border rounded-2xl overflow-hidden bg-white">
             <Table>
               <TableHeader className="bg-muted/10">
                 <TableRow>
-                  <TableHead className="font-bold text-[10px]">{lang === 'en' ? 'Item' : '貨品'}</TableHead>
-                  <TableHead className="text-center font-bold text-[10px]">{lang === 'en' ? 'Qty' : '數量'}</TableHead>
-                  <TableHead className="text-right font-bold text-[10px]">{lang === 'en' ? 'Total' : '金額'}</TableHead>
+                  <TableHead className="font-bold text-[10px]">${lang === 'en' ? 'Item' : '貨品'}</TableHead>
+                  <TableHead className="text-center font-bold text-[10px]">${lang === 'en' ? 'Qty' : '數量'}</TableHead>
+                  <TableHead className="text-right font-bold text-[10px]">${lang === 'en' ? 'Total' : '金額'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
