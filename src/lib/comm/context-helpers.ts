@@ -1,6 +1,7 @@
+
 /**
- * @fileOverview 通訊系統上下文輔助工具 (Context Helpers) - 強化版 (V5)
- * 修正：優化 Regex 以確保 {{key}} 與 {{{key}}} (HTML) 都能被精確識別並替換。
+ * @fileOverview 通訊系統上下文輔助工具 (Context Helpers) - 強化版 (V6)
+ * 修正：進一步優化 Regex 以確保 {{key}} 與 {{{key}}} (HTML) 都能被精確識別。
  */
 
 import { format } from "date-fns";
@@ -143,6 +144,7 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     orderDate: orderDate,
     customerName: String(data.customerName || data.customerInfo?.name || "Customer"),
     customerEmail: String(data.customerInfo?.email || data.email || ""),
+    customerPhone: String(data.customerInfo?.phone || data.phone || ""),
     subtotal: subtotalValue.toFixed(1),
     shippingFee: shippingFeeValue.toFixed(1),
     discountAmount: discountValue.toFixed(1),

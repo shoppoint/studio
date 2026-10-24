@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getNativeModel } from "@/ai/genkit";
@@ -58,6 +59,7 @@ export async function getAiStatusAction() {
       data: diagData
     };
   } catch (error: any) {
+    // 關鍵修正：回傳 success: false 而不是 throw error，防止 Next.js 報 500 錯誤
     return { 
       success: false, 
       message: "AI 服務診斷目前不可用",

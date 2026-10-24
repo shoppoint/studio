@@ -1,3 +1,4 @@
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -50,7 +51,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // 處理舊版 WordPress 路徑的重定向
+      // 處理舊版 WordPress 路徑的重定向至商店
       {
         source: '/wp-content/:path*',
         destination: '/shop',

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview 核心自動化處理中心 (V22.8 最終狀態守衛與審計日誌版)
  */
@@ -82,7 +83,3 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
     res.status(200).send("Ignored");
   }
 });
-
-// 其餘 handleOrderUpdate 保持不變...
-exports.handleOrderCreated = onDocumentCreated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ... */ });
-exports.handleOrderUpdate = onDocumentUpdated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ... */ });
