@@ -1,5 +1,5 @@
-# 最終穩定配置：移除所有變數定義以避開建置期的 IAM 權限檢查。
-# 系統將自動讀取 Firebase 控制台設定的環境變數，或回退至 Firestore 資料庫讀取金鑰。
+# SHOP POINT - App Hosting 性能與成本優化配置
+# 1 CPU + 1GB RAM 是 Next.js 商城的最佳平衡點
 runConfig:
   cpu: 1
   memoryMiB: 1024
