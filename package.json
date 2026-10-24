@@ -3,14 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "npm cache clean --force",
-    "predev": "rm -rf .next/cache",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean": "rm -rf .next node_modules firebase-debug.log* functions/node_modules && npm cache clean --force",
-    "postinstall": "rm -rf node_modules/.cache"
+    "clean": "rm -rf .next node_modules firebase-debug.log* functions/node_modules && npm cache clean --force"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.39.0",
