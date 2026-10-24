@@ -158,6 +158,8 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     billingAddress: formatAddress(data.billingAddress || data.shippingAddress),
     itemsTable: generateItemsTable(data.items || [], langStr),
     itemsList: itemsList,
+    fulfillmentStatus: String(data.fulfillmentStatus || data.status || "pending"),
+    isPickup: !!data.isPickup,
     storeName: String(genConfig?.storeName?.[lKey] || "SHOP POINT"),
     currentYear: new Date().getFullYear(),
     lang: lKey

@@ -18,7 +18,9 @@ import {
   Facebook,
   Instagram,
   Youtube,
-  Smartphone
+  Smartphone,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -53,6 +55,33 @@ export function BlockRenderer({ block }: BlockRendererProps) {
         <div className="px-4 py-2 space-y-2">
           {data.title && <h2 className="text-2xl font-black">{data.title}</h2>}
           <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{data.content || data.msg}</div>
+        </div>
+      );
+    case 'order_status_tracker':
+      return (
+        <div className="py-4 px-6 bg-muted/20 rounded-2xl border border-dashed my-4">
+           <div className="flex items-center justify-between mb-4">
+             <div className="flex flex-col items-center gap-1">
+               <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-white"><CheckCircle2 className="h-4 w-4" /></div>
+               <span className="text-[8px] font-black uppercase">Placed</span>
+             </div>
+             <div className="flex-1 h-0.5 bg-primary/20 mx-2" />
+             <div className="flex flex-col items-center gap-1 opacity-50">
+               <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Clock className="h-4 w-4" /></div>
+               <span className="text-[8px] font-black uppercase">Processing</span>
+             </div>
+             <div className="flex-1 h-0.5 bg-muted mx-2" />
+             <div className="flex flex-col items-center gap-1 opacity-50">
+               <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Truck className="h-4 w-4" /></div>
+               <span className="text-[8px] font-black uppercase">Shipped</span>
+             </div>
+             <div className="flex-1 h-0.5 bg-muted mx-2" />
+             <div className="flex flex-col items-center gap-1 opacity-50">
+               <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Package className="h-4 w-4" /></div>
+               <span className="text-[8px] font-black uppercase">Delivered</span>
+             </div>
+           </div>
+           <p className="text-[10px] text-center font-bold text-muted-foreground uppercase tracking-widest">實時進度預覽 (Live Tracking Preview)</p>
         </div>
       );
     case 'social_links':

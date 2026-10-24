@@ -54,7 +54,8 @@ import {
   PackageCheck,
   ClipboardList,
   Building2,
-  Copy
+  Copy,
+  LayoutList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,6 +116,7 @@ const VARIABLES = [
   { key: "{{shippingAddress}}", label: "完整收貨地址" },
   { key: "{{pickupLocation}}", label: "自取點名稱" },
   { key: "{{itemsTable}}", label: "產品明細表格" },
+  { key: "{{itemsList}}", label: "產品純文字清單" },
   { key: "{{couponCode}}", label: "專屬優惠代碼" },
   { key: "{{productName}}", label: "到貨產品名稱" },
   { key: "{{storeName}}", label: "商店名稱" },
@@ -230,6 +232,7 @@ function BroadcastBuilderContent() {
             type === 'billing_address' ? { title: "賬單地址", address: "{{billingAddress}}" } :
             type === 'shipping_details' ? { method: "{{shippingMethod}}", tracking: "{{trackingNo}}" } :
             type === 'pickup_point' ? { location: "{{pickupLocation}}" } :
+            type === 'order_status_tracker' ? {} :
             type === 'coupon' ? { code: "WELCOME10", discount: "10% OFF" } : {}
     };
     setContent(prev => ({ ...prev, emailBlocks: [...prev.emailBlocks, newBlock] }));
@@ -314,7 +317,6 @@ function BroadcastBuilderContent() {
       if (res.success) {
         toast({ title: "測試電郵已發送" });
       } else {
-        // 使用類型安全的方式獲取錯誤訊息
         const errorMsg = 'error' in res ? res.error : "Unknown transport error";
         throw new Error(errorMsg);
       }
@@ -428,6 +430,7 @@ function BroadcastBuilderContent() {
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">訂單與營運組件</Label>
                   <div className="grid grid-cols-1 gap-1">
+                    <LibBtn icon={LayoutList} label="訂單進度條" onClick={() => addBlock('order_status_tracker')} />
                     <LibBtn icon={Hash} label="單號日期塊" onClick={() => addBlock('order_meta')} />
                     <LibBtn icon={Calculator} label="訂單總額塊" onClick={() => addBlock('order_summary')} />
                     <LibBtn icon={UserCircle} label="顧客詳細資訊" onClick={() => addBlock('customer_details')} />

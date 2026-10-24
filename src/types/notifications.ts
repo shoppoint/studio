@@ -6,7 +6,8 @@ export type BlockType =
   | 'logo' | 'hero' | 'text' | 'products' | 'button' | 'footer' 
   | 'order_meta' | 'order_summary' | 'shipping_address' | 'billing_address' | 'customer_details' 
   | 'shipping_details' | 'pickup_point' | 'membership_upgrade' 
-  | 'stock_notice' | 'coupon' | 'abandoned_cart' | 'social_links';
+  | 'stock_notice' | 'coupon' | 'abandoned_cart' | 'social_links'
+  | 'order_status_tracker'; // 新增：訂單狀態進度條
 
 export interface EmailBlock {
   id: string;

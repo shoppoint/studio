@@ -1,8 +1,8 @@
 import { replaceVariables } from "./context-helpers";
 
 /**
- * @fileOverview 電郵渲染引擎 (Template Renderer) - 完整組件支持版 (V2)
- * 修正：補齊了所有可用組件的 HTML 渲染邏輯，包括物流、優惠券、到貨通知與購物車挽回。
+ * @fileOverview 電郵渲染引擎 (Template Renderer) - 完整組件支持版 (V3)
+ * 修正：新增訂單狀態進度條 (order_status_tracker) 渲染邏輯。
  */
 
 const LABELS: Record<string, Record<string, string>> = {
@@ -24,7 +24,10 @@ const LABELS: Record<string, Record<string, string>> = {
     qty: "數量",
     price: "金額",
     points_reward: "獲得積分",
-    back_in_stock: "缺貨通知"
+    status_placed: "已下單",
+    status_processing: "配貨中",
+    status_shipped: "已發貨",
+    status_delivered: "已完成"
   },
   en: {
     order_id: "Order ID",
@@ -44,7 +47,10 @@ const LABELS: Record<string, Record<string, string>> = {
     qty: "Qty",
     price: "Subtotal",
     points_reward: "Points Earned",
-    back_in_stock: "Back in Stock"
+    status_placed: "Placed",
+    status_processing: "Processing",
+    status_shipped: "Shipped",
+    status_delivered: "Delivered"
   }
 };
 
@@ -118,6 +124,45 @@ function renderBlock(block: any, context: Record<string, any>, labels: any): str
       return wrap(`
         ${data.title ? `<h2 style="font-size: 24px; font-weight: 900; color: #1a202c; margin: 0 0 15px 0; letter-spacing: -0.5px;">${replaceVariables(data.title, context)}</h2>` : ""}
         <div style="font-size: 15px; color: #4a5568; line-height: 1.8;">${replaceVariables(data.content || data.msg || "", context)}</div>
+      `);
+
+    case 'order_status_tracker':
+      const status = context.fulfillmentStatus || "pending";
+      const isPickup = context.isPickup;
+      
+      let step = 1;
+      if (['processing', 'reserved'].includes(status)) step = 2;
+      if (['shipped', 'ready_pickup'].includes(status)) step = 3;
+      if (['delivered', 'picked_up', 'completed'].includes(status)) step = 4;
+      if (status === 'cancelled') step = 0;
+
+      const getColor = (s: number) => step >= s ? "#f59e0b" : "#e2e8f0";
+      const getTxtColor = (s: number) => step >= s ? "#000000" : "#a0aec0";
+
+      return wrap(`
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+          <tr>
+            <td align="center" style="width: 25%;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${getColor(1)}; margin-bottom: 8px;"></div>
+              <div style="font-size: 10px; font-weight: 900; color: ${getTxtColor(1)}; text-transform: uppercase;">${labels.status_placed}</div>
+            </td>
+            <td style="padding-top: 5px;"><div style="height: 2px; background-color: ${getColor(2)};"></div></td>
+            <td align="center" style="width: 25%;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${getColor(2)}; margin-bottom: 8px;"></div>
+              <div style="font-size: 10px; font-weight: 900; color: ${getTxtColor(2)}; text-transform: uppercase;">${labels.status_processing}</div>
+            </td>
+            <td style="padding-top: 5px;"><div style="height: 2px; background-color: ${getColor(3)};"></div></td>
+            <td align="center" style="width: 25%;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${getColor(3)}; margin-bottom: 8px;"></div>
+              <div style="font-size: 10px; font-weight: 900; color: ${getTxtColor(3)}; text-transform: uppercase;">${isPickup ? "待取貨" : labels.status_shipped}</div>
+            </td>
+            <td style="padding-top: 5px;"><div style="height: 2px; background-color: ${getColor(4)};"></div></td>
+            <td align="center" style="width: 25%;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${getColor(4)}; margin-bottom: 8px;"></div>
+              <div style="font-size: 10px; font-weight: 900; color: ${getTxtColor(4)}; text-transform: uppercase;">${labels.status_delivered}</div>
+            </td>
+          </tr>
+        </table>
       `);
 
     case 'order_meta':

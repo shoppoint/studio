@@ -3,7 +3,7 @@
 import { getNativeModel } from "@/ai/genkit";
 
 /**
- * @fileOverview AI 服務連線測試與診斷 Action (V11 - 徹底消除 500 POST 錯誤)
+ * @fileOverview AI 服務連線測試與診斷 Action (V12 - 徹底消除 500 POST 錯誤)
  * 修正：嚴格捕獲所有異常並回傳 JSON 對象。確保失敗時不會拋出系統錯誤，從而防止 App Hosting 出現 500 POST 日誌。
  */
 
@@ -29,6 +29,7 @@ export async function getAiStatusAction() {
   try {
     let pingResult = "Pending";
     let errorDetail = "";
+    let diagData: any = null;
     
     try {
       const model = await getNativeModel();
@@ -38,21 +39,27 @@ export async function getAiStatusAction() {
       });
       const response = await result.response;
       pingResult = response.text().trim();
+      
+      diagData = {
+        status: (pingResult && pingResult !== "ConnectionFailed") ? "Healthy" : "Degraded",
+        ping: pingResult,
+        uptime: Math.floor(process.uptime()),
+        version: process.version,
+        revision: process.env.K_REVISION || "Local/Dev",
+        memory: process.memoryUsage ? {
+          rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
+          heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
+        } : null
+      };
     } catch (e: any) {
       pingResult = "ConnectionFailed";
       errorDetail = e.message;
+      diagData = { status: "Degraded", ping: pingResult, error: errorDetail };
     }
 
     return {
       success: true,
-      data: {
-        status: (pingResult && pingResult !== "ConnectionFailed") ? "Healthy" : "Degraded",
-        ping: pingResult,
-        error: errorDetail,
-        uptime: Math.floor(process.uptime()),
-        version: process.version,
-        revision: process.env.K_REVISION || "Local/Dev"
-      }
+      data: diagData
     };
   } catch (error: any) {
     // 核心修正：即便發生系統級錯誤，也回傳 JSON 而非拋出異常，徹底消除日誌中的 500 POST Error
