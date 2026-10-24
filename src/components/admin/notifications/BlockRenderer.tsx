@@ -34,7 +34,8 @@ interface BlockRendererProps {
 }
 
 /**
- * 畫布區塊渲染器：負責在編輯器中呈現各類組件的視覺效果
+ * 畫布區塊渲染器 - 100% JSX 版 (修正代碼洩漏問題)
+ * 修正說明：將所有傳入 wrap 的 HTML 字串改為 JSX 組件，確保編輯器中正確顯示視覺效果。
  */
 export function BlockRenderer({ block }: BlockRendererProps) {
   const { data, type } = block;
@@ -48,6 +49,12 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     if (url.startsWith('http')) return url;
     return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   };
+
+  const XIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+    </svg>
+  );
 
   switch (type) {
     case 'logo':
@@ -106,18 +113,18 @@ export function BlockRenderer({ block }: BlockRendererProps) {
         </div>
       );
     case 'order_meta':
-      return wrap(`
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #edf2f7; display: flex; justify-content: space-between;">
-          <div>
-            <p style="margin: 0; font-size: 10px; font-weight: 900; color: #a0aec0; text-transform: uppercase;">Order ID</p>
-            <p style="margin: 4px 0 0 0; font-size: 20px; font-weight: 900;">{{orderId}}</p>
+      return wrap(
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex justify-between items-center">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">Order ID</p>
+            <p className="text-xl font-black m-0">{"{{orderId}}"}</p>
           </div>
-          <div style="text-align: right;">
-            <p style="margin: 0; font-size: 10px; font-weight: 900; color: #a0aec0; text-transform: uppercase;">Date</p>
-            <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700;">{{orderDate}}</p>
+          <div className="text-right space-y-1">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">Date</p>
+            <p className="text-sm font-bold text-slate-600 m-0">{"{{orderDate}}"}</p>
           </div>
         </div>
-      `);
+      );
     case 'order_summary':
       return (
         <div className="bg-muted/10 p-6 rounded-2xl border border-dashed my-4 mx-4 space-y-4">
@@ -136,12 +143,16 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     case 'shipping_address':
     case 'billing_address':
       const isShipping = type === 'shipping_address';
-      return wrap(`
-        <div style="padding: 20px; border: 1.5px dashed #e2e8f0; border-radius: 20px;">
-          <p style="margin: 0 0 10px 0; font-size: 10px; font-weight: 900; color: #f59e0b; text-transform: uppercase;">${isShipping ? 'Shipping Address' : 'Billing Address'}</p>
-          <p style="margin: 0; font-size: 14px; font-weight: bold; line-height: 1.6;">{{shippingAddress}}</p>
+      return wrap(
+        <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">
+            {isShipping ? 'Shipping Address' : 'Billing Address'}
+          </p>
+          <p className="text-sm font-bold text-slate-800 leading-relaxed">
+            {"{{shippingAddress}}"}
+          </p>
         </div>
-      `);
+      );
     case 'customer_details':
       return (
         <div className="mx-4 bg-indigo-50 p-6 rounded-2xl border border-indigo-100 my-4 space-y-2">
@@ -245,12 +256,4 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     default:
       return null;
   }
-}
-
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-    </svg>
-  );
 }
