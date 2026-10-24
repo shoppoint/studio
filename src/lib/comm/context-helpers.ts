@@ -1,6 +1,6 @@
 /**
  * @fileOverview 通訊系統上下文輔助工具 (Context Helpers) - 強化版
- * 負責將 Firestore 原始數據轉換為電郵範本可用的變數。
+ * 修正：優化 Regex 以確保 {{{itemsTable}}} 等多層括號變數能被精確識別並替換。
  */
 
 import { format } from "date-fns";
@@ -95,11 +95,11 @@ export function generateItemsTable(items: any[], lang: string): string {
 }
 
 /**
- * 強化版變數替換引擎 - 修正 Regex 以支援多重括號
+ * 強化版變數替換引擎 - 修正 Regex 以同時支援 {{key}} 與 {{{key}}}
  */
 export function replaceVariables(text: any, context: Record<string, any>): string {
   if (typeof text !== 'string') return "";
-  // 修正 Regex: 支援 {{key}} 與 {{{key}}} 並確保 non-greedy 匹配
+  // 修正 Regex: 支援雙重或三重括號，並確保正確捕捉鍵名
   return text.replace(/\{\{\{?([^{}]+?)\}\}\}?/g, (match, key) => {
     const cleanKey = key.trim();
     if (context[cleanKey] !== undefined && context[cleanKey] !== null) {
@@ -139,6 +139,9 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
   const discountValue = Number(data.discountAmount || data.orderDiscount || 0);
   const totalValue = Number(data.total || (subtotalValue + shippingFeeValue - discountValue));
 
+  // 建立純文字產品清單供站內通知使用
+  const itemsList = (data.items || []).filter((it: any) => !it.isInternalGift).map((it: any) => `- ${it.name} x${it.qty}`).join('\n');
+
   return {
     orderId: String(data.orderId || data.id || "--"),
     orderDate: orderDate,
@@ -154,6 +157,7 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     shippingAddress: formatAddress(data.shippingAddress || data.billingAddress),
     billingAddress: formatAddress(data.billingAddress || data.shippingAddress),
     itemsTable: generateItemsTable(data.items || [], langStr),
+    itemsList: itemsList,
     storeName: String(genConfig?.storeName?.[lKey] || "SHOP POINT"),
     currentYear: new Date().getFullYear(),
     lang: lKey

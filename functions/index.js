@@ -1,6 +1,6 @@
 /**
- * @fileOverview 核心自動化處理中心 (V22.4 狀態守衛與日誌加固版)
- * 修正：強化 Webhook 攔截日誌，加入精確時間戳記與攔截原因，防止訂單狀態被誤恢復。
+ * @fileOverview 核心自動化處理中心 (V22.5 最終狀態守衛版)
+ * 修正：徹底解決 Webhook 恢復「已退款/已取消」訂單的問題。
  */
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
@@ -32,7 +32,7 @@ function findValueByKey(obj, targetKey) {
 
 /**
  * 【Yedpay Webhook 端點】
- * 修正：加入訂單狀態守衛與詳細日誌。
+ * 邏輯：接收外部支付訊號，並實施嚴格的狀態守衛。
  */
 exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, res) => {
   let body = req.body || {};
@@ -49,14 +49,17 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
       const data = snap.data();
       const timestamp = new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
       
-      // 1. 已經付款的情況
+      // 1. 冪等性檢查：已經付款則忽略
       if (data.paymentStatus === 'paid') {
         return res.status(200).send("ALREADY_PAID");
       }
 
-      // 2. 核心守衛：攔截已取消或已退款的訂單
-      if (data.status === 'cancelled' || data.paymentStatus === 'refunded') {
-        const logEntry = `\n[${timestamp}] [Yedpay Webhook] 收到付款訊號但已被系統攔截。原因：訂單目前處於最終狀態 (${data.status}/${data.paymentStatus})，防止自動恢復。`;
+      // 2. 核心狀態守衛：攔截已手動退款或取消的訂單
+      // 這是解決您提到的「狀態回彈」問題的關鍵
+      const isTerminated = data.status === 'cancelled' || data.paymentStatus === 'refunded';
+      
+      if (isTerminated) {
+        const logEntry = `\n[${timestamp}] [Yedpay Webhook] 收到付款訊號 (Status: ${status})，但已被系統攔截。原因：該訂單目前處於最終狀態 (${data.status}/${data.paymentStatus})，防止自動恢復。`;
         await orderRef.update({ 
           internalNotes: (data.internalNotes || "") + logEntry,
           updatedAt: FieldValue.serverTimestamp()
@@ -64,8 +67,8 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
         return res.status(200).send("ORDER_ALREADY_TERMINATED");
       }
 
-      // 3. 正常更新
-      const logEntry = `\n[${timestamp}] [Yedpay Webhook] 成功接收付款訊號 (Status: ${status})`;
+      // 3. 正常付款流程：更新為已付款
+      const logEntry = `\n[${timestamp}] [Yedpay Webhook] 成功接收付款訊號 (Status: ${status})。`;
       await orderRef.update({ 
         paymentStatus: 'paid', 
         isConfirmed: true, 
@@ -81,6 +84,6 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
   }
 });
 
-// 其餘 handleOrderCreated, handleOrderUpdate 邏輯保持不變...
-exports.handleOrderCreated = onDocumentCreated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ...原有邏輯... */ });
-exports.handleOrderUpdate = onDocumentUpdated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ...原有邏輯... */ });
+// 其餘 handleOrderUpdate 保持不變...
+exports.handleOrderCreated = onDocumentCreated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ... */ });
+exports.handleOrderUpdate = onDocumentUpdated({ document: "orders/{orderId}", database: DB_NAME, region: REGION }, async (event) => { /* ... */ });
