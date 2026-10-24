@@ -52,6 +52,17 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // 處理舊版 WordPress 路徑的重定向，修復 404 報錯並引導流量回商店
+      {
+        source: '/wp-content/:path*',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/wp-admin/:path*',
+        destination: '/shop',
+        permanent: true,
+      },
       {
         source: '/order-tracking',
         destination: '/faq',
