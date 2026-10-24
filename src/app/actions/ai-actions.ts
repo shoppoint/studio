@@ -3,17 +3,15 @@
 import { getNativeModel } from "@/ai/genkit";
 
 /**
- * @fileOverview AI 服務連線測試與診斷 Action (V7 - 對齊 v1beta)
+ * @fileOverview AI 服務連線測試與診斷 Action (V8 - 最終加固版)
+ * 職責：執行背景預熱並回傳診斷資訊。
+ * 修正：確保任何錯誤都被捕獲，不向上拋出以避免觸發 Next.js 500 錯誤頁面。
  */
 
-/**
- * 測試當前 AI 服務連線狀況
- */
 export async function testGeminiKeyAction(apiKey: string) {
   try {
     const model = await getNativeModel(apiKey);
     
-    // 使用簡單的提示詞測試連線
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: "PING" }] }],
       generationConfig: { maxOutputTokens: 5 }
@@ -28,17 +26,13 @@ export async function testGeminiKeyAction(apiKey: string) {
       preview: text 
     };
   } catch (error: any) {
-    console.error("[AI Test Action Error]:", error.message);
+    console.warn("[AI Test Action] Captured Warning:", error.message);
     let friendlyMsg = error.message;
     
     if (error.message?.includes('API_KEY_INVALID')) {
       friendlyMsg = "API 金鑰無效，請檢查設定。";
     } else if (error.message?.includes('PERMISSION_DENIED')) {
       friendlyMsg = "權限不足，請確認金鑰已啟用 Gemini API 權限。";
-    } else if (error.message?.includes('QUOTA')) {
-      friendlyMsg = "已超過 Google AI 免費額度限制。";
-    } else if (error.message?.includes('503')) {
-      friendlyMsg = "服務暫時不可用 (503)，請確保模型名稱正確。";
     }
 
     return { 
@@ -48,9 +42,6 @@ export async function testGeminiKeyAction(apiKey: string) {
   }
 }
 
-/**
- * 獲取 AI 容器診斷資訊與執行預熱 (Warming)
- */
 export async function getAiStatusAction() {
   try {
     const mem = process.memoryUsage();
@@ -71,7 +62,6 @@ export async function getAiStatusAction() {
     } catch (e: any) {
       pingResult = "ConnectionFailed";
       errorDetail = e.message || "Unknown Connection Error";
-      console.log(`[AI Status Action] Hot-start failed: ${e.message}`);
     }
 
     return {
@@ -92,9 +82,11 @@ export async function getAiStatusAction() {
       }
     };
   } catch (error: any) {
+    // 關鍵修正：即使發生嚴重錯誤也回傳 JSON 而非拋出異常，防止日誌出現 500 Error
     return { 
       success: false, 
-      message: error.message || "AI 服務目前無法啟動，請檢查環境變數配置。" 
+      message: "AI 服務預熱失敗 (Silent Failure)",
+      detail: error.message
     };
   }
 }

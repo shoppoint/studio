@@ -7,10 +7,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   experimental: {
-    // 關閉可能導致 Chunk 遺失的並行編譯選項，提升環境穩定性
     webpackBuildWorker: false,
     parallelServerBuildTraces: false,
-    // 僅保留必要的重型套件優化
     optimizePackageImports: ['recharts', 'date-fns', 'framer-motion'],
   },
   images: {
@@ -52,7 +50,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // 處理舊版 WordPress 路徑的重定向，修復 404 報錯並引導流量回商店
+      // 方案 A：處理舊版 WordPress 路徑的重定向，修復 404 報錯並引導流量回商店
       {
         source: '/wp-content/:path*',
         destination: '/shop',
@@ -78,7 +76,6 @@ const nextConfig: NextConfig = {
         destination: '/pos',
         permanent: true,
       },
-      // 將 Catalog API 跳轉集中至設定檔，提升路由效率
       {
         source: '/api/catalog/feed',
         destination: '/api/catalog/feed.csv',
@@ -97,13 +94,11 @@ const nextConfig: NextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
-    // 強化快取穩定性，防止 ENOSPC 錯誤
     config.cache = {
       type: 'memory'
     };
     config.devtool = false;
     
-    // 解決部分環境下模組解析路徑過長或衝突的問題
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
