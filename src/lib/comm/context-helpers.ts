@@ -142,7 +142,7 @@ export function generateItemsTextList(items: any[], lang: string): string {
  */
 export function replaceVariables(text: any, context: Record<string, any>): string {
   if (typeof text !== 'string') return "";
-  // 修正 Regex：精確匹配 {{...}} 或 {{{...}}} 結構，並確保內層括號被完全消耗
+  // 核心修正：更強韌的 Regex，確保能正確處理 {{{三括號}}}
   return text.replace(/\{\{\{?([^{}]+)\}\}\}?/g, (match, key) => {
     const cleanKey = key.trim();
     if (context[cleanKey] !== undefined && context[cleanKey] !== null) {

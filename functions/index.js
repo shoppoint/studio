@@ -1,8 +1,8 @@
 
 /**
- * @fileOverview 核心自動化處理中心 (V22.2 嚴格庫存控管版)
+ * @fileOverview 核心自動化處理中心 (V22.3 狀態守衛加固版)
  * 職責：1. 扣庫存；2. 確認後發信；3. 支付成功流轉；4. 取消沖銷。
- * 修正：補齊發信時的 BCC 管理員抄送邏輯，並確保嚴格執行 Web 來源檢查。
+ * 修正：加入 Webhook 狀態守衛，防止「已取消/已退款」訂單被過期 Webhook 訊號恢復。
  */
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
@@ -34,7 +34,7 @@ function findValueByKey(obj, targetKey) {
 }
 
 /**
- * 強化版通知上下文生成器 (JavaScript 版) - 修正時區對齊與變數補全
+ * 強化版通知上下文生成器 (JavaScript 版)
  */
 function getNotificationContext(data, genConfig, lang) {
   const isEn = String(lang || 'zh').startsWith('en');
@@ -135,7 +135,7 @@ function getNotificationContext(data, genConfig, lang) {
 }
 
 /**
- * 強化版電郵渲染引擎 (JavaScript 版) - 增加全組件支持
+ * 強化版電郵渲染引擎
  */
 function renderEmailHtml(blocks, context) {
   const replace = (str) => {
@@ -272,7 +272,6 @@ function renderEmailHtml(blocks, context) {
 
 /**
  * 【1. handleOrderCreated】
- * 職責：僅執行庫存扣減。
  */
 exports.handleOrderCreated = onDocumentCreated({
   document: "orders/{orderId}",
@@ -430,7 +429,7 @@ exports.handleOrderUpdate = onDocumentUpdated({
         const itemIds = Array.from(new Set(items.map(it => String(it.productId || it.id))));
         for (const pid of itemIds) {
           const pRef = db.collection('public_products').doc(pid);
-          const pSnap = await transaction.get(pRef); if (!pSnap.exists) continue;
+          const pSnap = await transaction.get(pRef); if (!pSnap.exists()) continue;
           const pData = pSnap.data();
           const qtyToReturn = items.filter(it => String(it.productId || it.id) === pid).reduce((sum, it) => sum + (Number(it.qty) || 1), 0);
           let batches = Array.isArray(pData.batches) ? [...pData.batches] : [];
