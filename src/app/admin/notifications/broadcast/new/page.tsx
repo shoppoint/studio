@@ -485,7 +485,7 @@ function BroadcastBuilderContent() {
                 <div className="min-h-[600px] flex flex-col bg-white">
                   {currentLangContent.emailBlocks.map((block, index) => (
                     <div key={block.id} onClick={() => !previewMode && setSelectedBlockId(block.id)} className={cn("relative group transition-all", !previewMode && "cursor-pointer hover:bg-primary/5", !previewMode && selectedBlockId === block.id && "bg-primary/5 ring-1 ring-inset ring-primary shadow-inner")}>
-                      <BlockRenderer block={block} />
+                      <BlockRenderer block={block} lang={langTab} />
                       {!previewMode && (
                         <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                           <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg" onClick={(e) => { e.stopPropagation(); moveBlock(index, 'up'); }} disabled={index === 0}><ArrowUp className="h-3 w-3" /></Button>

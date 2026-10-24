@@ -31,16 +31,64 @@ import { Separator } from "@/components/ui/separator";
 
 interface BlockRendererProps {
   block: EmailBlock;
+  lang?: "zh" | "en";
 }
 
+const PREVIEW_LABELS: Record<string, Record<string, string>> = {
+  zh: {
+    order_id: "訂單編號",
+    date: "日期",
+    summary: "訂單摘要",
+    subtotal: "小計",
+    shipping: "運費",
+    discount: "優惠",
+    total: "總額",
+    placed: "已下單",
+    processing: "配貨中",
+    shipped: "已發貨",
+    delivered: "已完成",
+    ready: "待取貨",
+    shipping_addr: "收貨地址",
+    billing_addr: "賬單地址",
+    cust_info: "顧客資訊",
+    method: "配送方式",
+    tracking: "物流單號",
+    pickup: "自取地點",
+    coupon_title: "專屬優惠",
+    items_title: "產品明細"
+  },
+  en: {
+    order_id: "Order ID",
+    date: "Date",
+    summary: "Order Summary",
+    subtotal: "Subtotal",
+    shipping: "Shipping",
+    discount: "Discount",
+    total: "Total",
+    placed: "Placed",
+    processing: "Processing",
+    shipped: "Shipped",
+    delivered: "Delivered",
+    ready: "Ready",
+    shipping_addr: "Shipping Address",
+    billing_addr: "Billing Address",
+    cust_info: "Customer Info",
+    method: "Method",
+    tracking: "Tracking",
+    pickup: "Pickup Point",
+    coupon_title: "Exclusive Offer",
+    items_title: "Order Items"
+  }
+};
+
 /**
- * 畫布區塊渲染器 - 100% JSX 版 (修正代碼洩漏問題)
- * 修正說明：將所有傳入 wrap 的 HTML 字串改為 JSX 組件，確保編輯器中正確顯示視覺效果。
+ * 畫布區塊渲染器 - 100% JSX 視覺化版 (支援實時雙語預覽)
  */
-export function BlockRenderer({ block }: BlockRendererProps) {
+export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
   const { data, type } = block;
   if (!data) return null;
 
+  const labels = PREVIEW_LABELS[lang] || PREVIEW_LABELS["zh"];
   const wrap = (children: React.ReactNode) => <div className="p-4">{children}</div>;
 
   const baseUrl = "https://shoppoint.hk";
@@ -65,39 +113,38 @@ export function BlockRenderer({ block }: BlockRendererProps) {
         </div>
       );
     case 'hero':
-      return wrap(<img src={ensureAbsolute(data.url)} className="w-full rounded-2xl shadow-sm" alt="Hero" />);
+      return wrap(<img src={ensureAbsolute(data.url)} className="w-full rounded-2xl shadow-sm" alt="Banner" />);
     case 'text':
       return (
-        <div className="px-6 py-4 space-y-2">
+        <div className="px-6 py-4 space-y-2 text-left">
           {data.title && <h2 className="text-2xl font-black">{data.title}</h2>}
           <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{data.content || data.msg}</div>
         </div>
       );
     case 'order_status_tracker':
       return (
-        <div className="py-4 px-6 bg-muted/20 rounded-2xl border border-dashed my-4 mx-4">
-           <div className="flex items-center justify-between mb-4">
-             <div className="flex flex-col items-center gap-1">
+        <div className="py-8 px-6 bg-muted/20 rounded-2xl border border-dashed my-4 mx-4">
+           <div className="flex items-center justify-between">
+             <div className="flex flex-col items-center gap-1.5">
                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-white"><CheckCircle2 className="h-4 w-4" /></div>
-               <span className="text-[8px] font-black uppercase">Placed</span>
+               <span className="text-[8px] font-black uppercase text-slate-900">{labels.placed}</span>
              </div>
-             <div className="flex-1 h-0.5 bg-primary/20 mx-2" />
-             <div className="flex flex-col items-center gap-1 opacity-50">
+             <div className="flex-1 h-0.5 bg-primary/20 mx-1" />
+             <div className="flex flex-col items-center gap-1.5 opacity-50">
                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Clock className="h-4 w-4" /></div>
-               <span className="text-[8px] font-black uppercase">Processing</span>
+               <span className="text-[8px] font-black uppercase">{labels.processing}</span>
              </div>
-             <div className="flex-1 h-0.5 bg-muted mx-2" />
-             <div className="flex flex-col items-center gap-1 opacity-50">
+             <div className="flex-1 h-0.5 bg-muted mx-1" />
+             <div className="flex flex-col items-center gap-1.5 opacity-50">
                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Truck className="h-4 w-4" /></div>
-               <span className="text-[8px] font-black uppercase">Shipped</span>
+               <span className="text-[8px] font-black uppercase">{labels.shipped}</span>
              </div>
-             <div className="flex-1 h-0.5 bg-muted mx-2" />
-             <div className="flex flex-col items-center gap-1 opacity-50">
+             <div className="flex-1 h-0.5 bg-muted mx-1" />
+             <div className="flex flex-col items-center gap-1.5 opacity-50">
                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Package className="h-4 w-4" /></div>
-               <span className="text-[8px] font-black uppercase">Delivered</span>
+               <span className="text-[8px] font-black uppercase">{labels.delivered}</span>
              </div>
            </div>
-           <p className="text-[10px] text-center font-bold text-muted-foreground uppercase tracking-widest">實時進度預覽 (Live Tracking Preview)</p>
         </div>
       );
     case 'social_links':
@@ -105,38 +152,36 @@ export function BlockRenderer({ block }: BlockRendererProps) {
         <div className={cn("flex items-center gap-3 py-4 px-6", data.align === 'center' ? 'justify-center' : data.align === 'right' ? 'justify-end' : 'justify-start')}>
           <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white"><Facebook className="h-4 w-4" /></div>
           <div className="h-8 w-8 rounded-full bg-pink-600 flex items-center justify-center text-white"><Instagram className="h-4 w-4" /></div>
-          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center text-white">
-            <XIcon className="h-4 w-4" />
-          </div>
+          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center text-white"><XIcon className="h-4 w-4" /></div>
           <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center text-white"><Youtube className="h-4 w-4" /></div>
           <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center text-white"><Smartphone className="h-4 w-4" /></div>
         </div>
       );
     case 'order_meta':
       return wrap(
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex justify-between items-center">
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex justify-between items-center text-left">
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">Order ID</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">{labels.order_id}</p>
             <p className="text-xl font-black m-0">{"{{orderId}}"}</p>
           </div>
           <div className="text-right space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">Date</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest m-0">{labels.date}</p>
             <p className="text-sm font-bold text-slate-600 m-0">{"{{orderDate}}"}</p>
           </div>
         </div>
       );
     case 'order_summary':
       return (
-        <div className="bg-muted/10 p-6 rounded-2xl border border-dashed my-4 mx-4 space-y-4">
+        <div className="bg-muted/10 p-6 rounded-2xl border border-dashed my-4 mx-4 space-y-4 text-left">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-            <Calculator className="h-3 w-3" /> Order Summary
+            <Calculator className="h-3 w-3" /> {labels.summary}
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>Subtotal 小計</span><span>$ {"{{subtotal}}"}</span></div>
-            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>Shipping 運費</span><span>$ {"{{shippingFee}}"}</span></div>
-            <div className="flex justify-between text-xs font-bold text-green-600"><span>Discount 優惠</span><span>-$ {"{{discountAmount}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>{labels.subtotal}</span><span>$ {"{{subtotal}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground"><span>{labels.shipping}</span><span>$ {"{{shippingFee}}"}</span></div>
+            <div className="flex justify-between text-xs font-bold text-green-600"><span>{labels.discount}</span><span>-$ {"{{discountAmount}}"}</span></div>
             <Separator className="my-2" />
-            <div className="flex justify-between text-base font-black"><span>Total 總額</span><span className="text-primary">$ {"{{totalAmount}}"}</span></div>
+            <div className="flex justify-between text-base font-black"><span>{labels.total}</span><span className="text-primary">$ {"{{totalAmount}}"}</span></div>
           </div>
         </div>
       );
@@ -144,9 +189,9 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     case 'billing_address':
       const isShipping = type === 'shipping_address';
       return wrap(
-        <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+        <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-left">
           <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">
-            {isShipping ? 'Shipping Address' : 'Billing Address'}
+            {isShipping ? labels.shipping_addr : labels.billing_addr}
           </p>
           <p className="text-sm font-bold text-slate-800 leading-relaxed">
             {"{{shippingAddress}}"}
@@ -155,77 +200,53 @@ export function BlockRenderer({ block }: BlockRendererProps) {
       );
     case 'customer_details':
       return (
-        <div className="mx-4 bg-indigo-50 p-6 rounded-2xl border border-indigo-100 my-4 space-y-2">
-          <p className="text-[10px] font-black uppercase text-indigo-700">Customer Info</p>
+        <div className="mx-4 bg-indigo-50 p-6 rounded-2xl border border-indigo-100 my-4 space-y-2 text-left">
+          <p className="text-[10px] font-black uppercase text-indigo-700">{labels.cust_info}</p>
           <p className="font-bold text-sm">{"{{customerName}}"}</p>
           <p className="text-xs text-indigo-900/60">{"{{customerPhone}}"} • {"{{customerEmail}}"}</p>
         </div>
       );
     case 'shipping_details':
       return (
-        <div className="mx-4 bg-muted/20 p-6 rounded-2xl border my-4 flex justify-between items-center">
+        <div className="mx-4 bg-muted/20 p-6 rounded-2xl border my-4 flex justify-between items-center text-left">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase text-muted-foreground">Method</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground">{labels.method}</p>
             <p className="font-bold text-sm">{"{{shippingMethod}}"}</p>
           </div>
           <div className="text-right space-y-1">
-            <p className="text-[10px] font-black uppercase text-muted-foreground">Tracking</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground">{labels.tracking}</p>
             <p className="font-mono text-sm font-bold text-primary">{"{{trackingNo}}"}</p>
           </div>
         </div>
       );
     case 'pickup_point':
       return (
-        <div className="mx-4 p-6 bg-orange-50 border border-orange-100 rounded-2xl my-4 space-y-2">
+        <div className="mx-4 p-6 bg-orange-50 border border-orange-100 rounded-2xl my-4 space-y-2 text-left">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase text-orange-700">
-            <Store className="h-3 w-3" /> Pickup Point
+            <Store className="h-3 w-3" /> {labels.pickup}
           </div>
           <p className="font-bold text-sm">{'{{pickupLocation}}'}</p>
-        </div>
-      );
-    case 'membership_upgrade':
-      return (
-        <div className="mx-4 p-8 text-center bg-gradient-to-br from-amber-400 to-primary rounded-[2rem] text-white my-6 shadow-xl space-y-4">
-          <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center mx-auto"><Award className="h-6 w-6" /></div>
-          <div className="space-y-1">
-            <h2 className="text-xl font-black">Level Up!</h2>
-            <p className="font-bold text-sm">New Tier: {"{{newTier}}"}</p>
-          </div>
-        </div>
-      );
-    case 'stock_notice':
-      return (
-        <div className="mx-4 p-6 bg-blue-50 border border-blue-100 rounded-2xl my-4 space-y-3">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-700"><Bell className="h-4 w-4" /> Back in Stock</div>
-          <p className="font-bold text-sm">{"{{productName}}"}</p>
         </div>
       );
     case 'coupon':
       return (
         <div className="mx-4 p-6 border-4 border-dashed border-primary/40 rounded-2xl my-6 text-center space-y-3 bg-primary/5">
-          <p className="text-[10px] font-black uppercase text-primary">Exclusive Offer</p>
+          <p className="text-[10px] font-black uppercase text-primary">{labels.coupon_title}</p>
           <h2 className="text-2xl font-black text-primary">{data.discount || "SPECIAL GIFT"}</h2>
           <div className="bg-white px-4 py-2 rounded-lg border inline-block font-mono font-bold text-lg tracking-widest">{"{{couponCode}}"}</div>
         </div>
       );
-    case 'abandoned_cart':
-      return (
-        <div className="mx-4 p-6 bg-red-50 border border-red-100 rounded-2xl my-4 space-y-4">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600"><ShoppingCart className="h-4 w-4" /> Shopping Cart</div>
-          <div className="bg-white/50 p-4 rounded-xl border border-dashed text-[10px] italic text-center">Items Table: {"{{{itemsTable}}}"}</div>
-        </div>
-      );
     case 'products':
       return (
-        <div className="mx-4 my-6 space-y-3">
-          <p className="text-[10px] font-black uppercase text-muted-foreground ml-2">Order Items</p>
-          <div className="border rounded-2xl overflow-hidden">
+        <div className="mx-4 my-6 space-y-3 text-left">
+          <p className="text-[10px] font-black uppercase text-muted-foreground ml-2">{labels.items_title}</p>
+          <div className="border rounded-2xl overflow-hidden bg-white">
             <Table>
               <TableHeader className="bg-muted/10">
                 <TableRow>
-                  <TableHead className="font-bold text-[10px]">Item</TableHead>
-                  <TableHead className="text-center font-bold text-[10px]">Qty</TableHead>
-                  <TableHead className="text-right font-bold text-[10px]">Price</TableHead>
+                  <TableHead className="font-bold text-[10px]">{lang === 'en' ? 'Item' : '貨品'}</TableHead>
+                  <TableHead className="text-center font-bold text-[10px]">{lang === 'en' ? 'Qty' : '數量'}</TableHead>
+                  <TableHead className="text-right font-bold text-[10px]">{lang === 'en' ? 'Total' : '金額'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
