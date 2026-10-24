@@ -1,0 +1,26 @@
+User-Agent: *
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /categories
+Allow: /deals
+Allow: /clearance
+Allow: /news/
+Allow: /about
+Allow: /contact
+Allow: /gifts
+Allow: /new-arrivals
+Allow: /recommendations
+Allow: /sitemap.xml
+Disallow: /*?q=*
+Disallow: /*?brand=*
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /profile
+Disallow: /wishlist
+Disallow: /*_next/
+
+Sitemap: https://shoppoint.hk/sitemap.xml

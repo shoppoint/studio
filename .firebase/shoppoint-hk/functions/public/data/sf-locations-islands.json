@@ -1,0 +1,11 @@
+
+{
+  "locations": [
+    { "code": "8P12A", "name_zh": "愉景灣順豐站", "name_en": "Discovery Bay S.F. Business Station", "area_zh": "離島", "district_zh": "離島區", "address_zh": "大嶼山愉景灣愉景廣場地下 G65 號舖", "address_en": "Shop G65, G/F, Discovery Bay Plaza, Discovery Bay, Lantau Island" },
+    { "code": "8P13A", "name_zh": "珀麗灣(馬灣)順豐站", "name_en": "Park Island (Ma Wan) S.F. Business Station", "area_zh": "離島", "district_zh": "離島區", "address_zh": "馬灣珀麗灣臨海廣場地下 1 號舖", "address_en": "Shop 1, G/F, Beach Commercial Complex, Park Island, Ma Wan" },
+    { "code": "852T", "name_zh": "東涌富東廣場分站", "name_en": "Tung Chung Fu Tung Plaza", "area_zh": "離島", "district_zh": "離島區", "address_zh": "東涌富東街6號富東廣場地下", "address_en": "G/F, Fu Tung Plaza, 6 Fu Tung Street, Tung Chung" },
+    { "code": "852QB", "name_zh": "香港國際機場分站", "name_en": "Hong Kong International Airport", "area_zh": "離島", "district_zh": "離島區", "address_zh": "赤鱲角機場一號客運大樓5樓", "address_en": "L5, Terminal 1, Hong Kong International Airport, Chek Lap Kok" },
+    { "code": "H852T011P", "name_zh": "東涌映灣園智能櫃", "name_en": "Caribbean Coast EF Locker", "area_zh": "離島", "district_zh": "離島區", "address_zh": "東涌健東路1號映灣園購物中心地下", "address_en": "G/F, Caribbean Bazaar, 1 Kin Tung Road, Tung Chung" },
+    { "code": "H852P122P", "name_zh": "愉景灣愉景北商場智能櫃", "name_en": "Discovery Bay North Plaza EF Locker", "area_zh": "離島", "district_zh": "離島區", "address_zh": "愉景灣愉景北商場地下", "address_en": "G/F, Discovery Bay North Plaza, Discovery Bay" }
+  ]
+}

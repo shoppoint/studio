@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 /**
- * 訂單詳情 - 概覽分頁 (V27 穩定版 - 確保 Select 始終具備 Value)
+ * 訂單詳情 - 概覽分頁 (V28 穩定版 - 嚴格封堵 Select 崩潰點)
  */
 export function OverviewTab({ 
   order, locations, isEditMode, fulfillmentStatus, setFulfillmentStatus, 
@@ -60,16 +60,18 @@ export function OverviewTab({
   const isEn = lang === 'en';
 
   const resolvedLocationName = React.useMemo(() => {
-    if (!fulfillmentLocationId || !locations) return "未指定";
-    const loc = locations.find((l: any) => l.id === fulfillmentLocationId);
-    return loc ? (lang === 'en' ? (loc.name_en || loc.name_zh) : (loc.name_zh || loc.name_en)) : fulfillmentLocationId;
-  }, [fulfillmentLocationId, locations, lang]);
+    const locId = fulfillmentLocationId || order?.fulfillmentLocationId;
+    if (!locId || !locations) return "未指定";
+    const loc = locations.find((l: any) => l.id === locId);
+    return loc ? (lang === 'en' ? (loc.name_en || loc.name_zh) : (loc.name_zh || loc.name_en)) : locId;
+  }, [fulfillmentLocationId, order?.fulfillmentLocationId, locations, lang]);
 
   const dateStr = order?.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'yyyy-MM-dd HH:mm:ss') : "--";
 
   const handleManualSync = async () => {
     if (!order?.id || !db) return;
-    if (!fulfillmentLocationId || fulfillmentLocationId === 'none') {
+    const locId = fulfillmentLocationId || order?.fulfillmentLocationId;
+    if (!locId || locId === 'none') {
       toast({ title: "請先設定履約分店", variant: "destructive" });
       return;
     }
@@ -97,16 +99,16 @@ export function OverviewTab({
           const qtyToDeduct = items.filter((it: any) => String(it.id || it.productId) === pid).reduce((sum: number, it: any) => sum + (Number(it.qty) || 1), 0);
           let batches = Array.isArray(pData.batches) ? [...pData.batches] : [];
           let rem = qtyToDeduct;
-          const validLocalBatches = batches.filter(b => b.locationId === fulfillmentLocationId && (!b.expiryDate || b.expiryDate >= todayStr)).sort((a, b) => (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999"));
+          const validLocalBatches = batches.filter(b => b.locationId === locId && (!b.expiryDate || b.expiryDate >= todayStr)).sort((a, b) => (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999"));
           for (const b of validLocalBatches) {
             if (rem <= 0) break;
             if (b.quantity > 0) { const d = Math.min(b.quantity, rem); b.quantity = Number(b.quantity) - d; rem -= d; }
           }
           if (rem > 0) throw new Error(`庫存不足: ${pData.productName_zh || pid}`);
           const newTotalStock = batches.filter(b => !b.expiryDate || b.expiryDate >= todayStr).reduce((acc, b) => acc + (Number(b.quantity) || 0), 0);
-          const currentLocStock = batches.filter(b => b.locationId === fulfillmentLocationId && (!b.expiryDate || b.expiryDate >= todayStr)).reduce((acc, b) => acc + (Number(b.quantity) || 0), 0);
-          const updates: any = { batches, stock: newTotalStock, [`warehouseStock.${fulfillmentLocationId}`]: currentLocStock, updatedAt: serverTimestamp() };
-          if (fulfillmentLocationId === defaultHubId) updates.onlineStock = currentLocStock;
+          const currentLocStock = batches.filter(b => b.locationId === locId && (!b.expiryDate || b.expiryDate >= todayStr)).reduce((acc, b) => acc + (Number(b.quantity) || 0), 0);
+          const updates: any = { batches, stock: newTotalStock, [`warehouseStock.${locId}`]: currentLocStock, updatedAt: serverTimestamp() };
+          if (locId === defaultHubId) updates.onlineStock = currentLocStock;
           transaction.update(pSnap.ref, updates);
         }
         transaction.update(orderRef, { inventorySyncStatus: 'success', updatedAt: serverTimestamp() });
@@ -125,7 +127,7 @@ export function OverviewTab({
             <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> 核心狀態與支付</h4>
             <div className="grid gap-2 p-5 bg-muted/10 rounded-2xl border border-dashed">
               <Label className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-2"><Calendar className="h-3 w-3" /> 訂單成立日期</Label>
-              {isEditMode ? <input type="datetime-local" value={orderDateInput} onChange={e => setOrderDateInput(e.target.value)} className="h-11 w-full rounded-xl bg-white border-none shadow-sm px-4 font-black text-slate-800" /> : <p className="font-bold text-sm text-slate-800 px-1">{dateStr}</p>}
+              {isEditMode ? <input type="datetime-local" value={orderDateInput || ""} onChange={e => setOrderDateInput(e.target.value)} className="h-11 w-full rounded-xl bg-white border-none shadow-sm px-4 font-black text-slate-800" /> : <p className="font-bold text-sm text-slate-800 px-1">{dateStr}</p>}
             </div>
             <div className="grid gap-6">
               <div className="grid gap-2">
@@ -144,7 +146,7 @@ export function OverviewTab({
                   <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl border-none shadow-2xl">
                     <SelectItem value="none" className="italic opacity-50">未指定</SelectItem>
-                    {Object.entries(statusT).map(([key, label]: [string, any]) => <SelectItem key={key} value={key || 'none'}>{label}</SelectItem>)}
+                    {statusT && Object.entries(statusT).map(([key, label]: [string, any]) => <SelectItem key={key} value={key || 'none'}>{label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -188,7 +190,7 @@ export function OverviewTab({
             <div className="grid gap-4">
               <Label className="text-[10px] font-black uppercase opacity-60">庫存同步狀態</Label>
               <div className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-muted-foreground/10 space-y-4">
-                {order?.inventorySyncStatus === 'success' ? <Badge className="bg-green-500 text-white border-none font-black h-9 px-6 rounded-2xl gap-2 shadow-md"><CheckCircle2 className="h-4 w-4" /> Synchronized</Badge> : <Button onClick={handleManualSync} disabled={isSyncing || !fulfillmentLocationId || fulfillmentLocationId === 'none'} className="rounded-xl font-bold bg-orange-600 text-white shadow-lg gap-2 px-6">{isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />} 重新嘗試同步</Button>}
+                {order?.inventorySyncStatus === 'success' ? <Badge className="bg-green-500 text-white border-none font-black h-9 px-6 rounded-2xl gap-2 shadow-md"><CheckCircle2 className="h-4 w-4" /> Synchronized</Badge> : <Button onClick={handleManualSync} disabled={isSyncing || !(fulfillmentLocationId || order?.fulfillmentLocationId)} className="rounded-xl font-bold bg-orange-600 text-white shadow-lg gap-2 px-6">{isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />} 重新嘗試同步</Button>}
               </div>
             </div>
           </div>
