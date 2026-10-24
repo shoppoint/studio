@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 /**
- * 訂單詳情 - 概覽分頁 (V28 穩定版 - 嚴格封堵 Select 崩潰點)
+ * 訂單詳情 - 概覽分頁 (V31 穩定版 - 強制設置預設值以防止 SSR 崩潰)
  */
 export function OverviewTab({ 
   order, locations, isEditMode, fulfillmentStatus, setFulfillmentStatus, 
@@ -50,14 +50,11 @@ export function OverviewTab({
   pointsAwardedManual, setPointsAwardedManual,
   orderDateInput, setOrderDateInput,
   packagingPreference, setPackagingPreference,
-  memberData,
   lang
 }: any) {
   const { toast } = useToast();
   const db = useFirestore();
   const [isSyncing, setIsSyncing] = useState(false);
-
-  const isEn = lang === 'en';
 
   const resolvedLocationName = React.useMemo(() => {
     const locId = fulfillmentLocationId || order?.fulfillmentLocationId;
@@ -133,7 +130,7 @@ export function OverviewTab({
               <div className="grid gap-2">
                 <Label className="text-[10px] font-black uppercase opacity-60">支付途徑</Label>
                 <Select value={paymentMethod || 'none'} onValueChange={setPaymentMethod} disabled={!isEditMode}>
-                  <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue placeholder="請選擇支付方式" /></SelectTrigger>
                   <SelectContent className="rounded-xl border-none shadow-2xl">
                     <SelectItem value="none" className="italic opacity-50">未指定</SelectItem>
                     {PAYMENT_METHODS.map(m => <SelectItem key={m.id} value={m.id || 'none'}>{m.label}</SelectItem>)}
@@ -142,8 +139,8 @@ export function OverviewTab({
               </div>
               <div className="grid gap-2">
                 <Label className="text-[10px] font-black uppercase opacity-60">出貨進度</Label>
-                <Select value={fulfillmentStatus || 'none'} onValueChange={setFulfillmentStatus} disabled={!isEditMode}>
-                  <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue /></SelectTrigger>
+                <Select value={fulfillmentStatus || 'pending'} onValueChange={setFulfillmentStatus} disabled={!isEditMode}>
+                  <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue placeholder="請選擇出貨進度" /></SelectTrigger>
                   <SelectContent className="rounded-xl border-none shadow-2xl">
                     <SelectItem value="none" className="italic opacity-50">未指定</SelectItem>
                     {statusT && Object.entries(statusT).map(([key, label]: [string, any]) => <SelectItem key={key} value={key || 'none'}>{label}</SelectItem>)}
@@ -154,7 +151,7 @@ export function OverviewTab({
                 <div className="grid gap-2">
                   <Label className="text-[10px] font-black uppercase opacity-60">付款狀態</Label>
                   <Select value={paymentStatus || 'unpaid'} onValueChange={setPaymentStatus} disabled={!isEditMode}>
-                    <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11 bg-muted/20 border-none rounded-xl font-bold"><SelectValue placeholder="請選擇付款狀態" /></SelectTrigger>
                     <SelectContent className="rounded-xl border-none shadow-2xl">
                       <SelectItem value="unpaid">UNPAID (未付款)</SelectItem>
                       <SelectItem value="pending">PENDING (待核實)</SelectItem>
