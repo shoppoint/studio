@@ -81,9 +81,6 @@ const PREVIEW_LABELS: Record<string, Record<string, string>> = {
   }
 };
 
-/**
- * 畫布區塊渲染器 - 100% JSX 視覺化版 (支援實時雙語預覽)
- */
 export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
   const { data, type } = block;
   if (!data) return null;
@@ -98,17 +95,11 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
     return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  const XIcon = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-    </svg>
-  );
-
   switch (type) {
     case 'logo':
       const align = data.align === 'center' ? 'center' : 'left';
       return (
-        <div className={cn("flex py-2 px-4", align === 'center' ? 'justify-center' : 'justify-start')}>
+        <div className={cn("flex py-2 px-4", align === 'center' ? "justify-center" : "justify-start")}>
           <img src={ensureAbsolute(data.url || "/logo.png")} alt="Logo" style={{ maxHeight: '50px' }} />
         </div>
       );
@@ -145,16 +136,6 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
                <span className="text-[8px] font-black uppercase">{labels.delivered}</span>
              </div>
            </div>
-        </div>
-      );
-    case 'social_links':
-      return (
-        <div className={cn("flex items-center gap-3 py-4 px-6", data.align === 'center' ? 'justify-center' : data.align === 'right' ? 'justify-end' : 'justify-start')}>
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white"><Facebook className="h-4 w-4" /></div>
-          <div className="h-8 w-8 rounded-full bg-pink-600 flex items-center justify-center text-white"><Instagram className="h-4 w-4" /></div>
-          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center text-white"><XIcon className="h-4 w-4" /></div>
-          <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center text-white"><Youtube className="h-4 w-4" /></div>
-          <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center text-white"><Smartphone className="h-4 w-4" /></div>
         </div>
       );
     case 'order_meta':
@@ -217,15 +198,6 @@ export function BlockRenderer({ block, lang = "zh" }: BlockRendererProps) {
             <p className="text-[10px] font-black uppercase text-muted-foreground">{labels.tracking}</p>
             <p className="font-mono text-sm font-bold text-primary">{"{{trackingNo}}"}</p>
           </div>
-        </div>
-      );
-    case 'pickup_point':
-      return (
-        <div className="mx-4 p-6 bg-orange-50 border border-orange-100 rounded-2xl my-4 space-y-2 text-left">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-orange-700">
-            <Store className="h-3 w-3" /> {labels.pickup}
-          </div>
-          <p className="font-bold text-sm">{'{{pickupLocation}}'}</p>
         </div>
       );
     case 'coupon':

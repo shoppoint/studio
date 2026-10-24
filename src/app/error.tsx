@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { AlertTriangle, RefreshCcw, Home, MessageCircle, ArrowRight } from 'lucide-react';
+import { AlertTriangle, RefreshCcw, Home, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
 /**
  * 運行時錯誤邊界 (Runtime Error Boundary) - 500 錯誤指定頁面
- * 強化用戶導向功能，提供返回首頁按鈕與 WhatsApp 即時諮詢。
  */
 export default function Error({
   error,

@@ -1,6 +1,5 @@
 /**
- * @fileOverview 核心自動化處理中心 (V22.5 最終狀態守衛版)
- * 修正：徹底解決 Webhook 恢復「已退款/已取消」訂單的問題。
+ * @fileOverview 核心自動化處理中心 (V22.8 最終狀態守衛與審計日誌版)
  */
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
@@ -32,7 +31,7 @@ function findValueByKey(obj, targetKey) {
 
 /**
  * 【Yedpay Webhook 端點】
- * 邏輯：接收外部支付訊號，並實施嚴格的狀態守衛。
+ * 實施嚴格的冪等性與狀態守衛，防止「殭屍訂單」復活。
  */
 exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, res) => {
   let body = req.body || {};
@@ -49,17 +48,17 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
       const data = snap.data();
       const timestamp = new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
       
-      // 1. 冪等性檢查：已經付款則忽略
+      // 1. 冪等性檢查：已經付款則忽略，避免重複處理
       if (data.paymentStatus === 'paid') {
         return res.status(200).send("ALREADY_PAID");
       }
 
-      // 2. 核心狀態守衛：攔截已手動退款或取消的訂單
-      // 這是解決您提到的「狀態回彈」問題的關鍵
-      const isTerminated = data.status === 'cancelled' || data.paymentStatus === 'refunded';
+      // 2. 核心狀態守衛：攔截已取消、已退款或已完成的訂單
+      // 防止 Webhook 將最終狀態的訂單拉回「處理中」
+      const isTerminated = data.status === 'cancelled' || data.paymentStatus === 'refunded' || data.status === 'completed';
       
       if (isTerminated) {
-        const logEntry = `\n[${timestamp}] [Yedpay Webhook] 收到付款訊號 (Status: ${status})，但已被系統攔截。原因：該訂單目前處於最終狀態 (${data.status}/${data.paymentStatus})，防止自動恢復。`;
+        const logEntry = `\n[${timestamp}] [Yedpay Webhook] 收到付款成功訊號，但已被攔截。原因：訂單目前處於最終狀態 (${data.status}/${data.paymentStatus})，系統拒絕自動恢復狀態。`;
         await orderRef.update({ 
           internalNotes: (data.internalNotes || "") + logEntry,
           updatedAt: FieldValue.serverTimestamp()
@@ -68,7 +67,7 @@ exports.yedpayWebhook = onRequest({ region: REGION, cors: true }, async (req, re
       }
 
       // 3. 正常付款流程：更新為已付款
-      const logEntry = `\n[${timestamp}] [Yedpay Webhook] 成功接收付款訊號 (Status: ${status})。`;
+      const logEntry = `\n[${timestamp}] [Yedpay Webhook] 成功接收付款訊號。`;
       await orderRef.update({ 
         paymentStatus: 'paid', 
         isConfirmed: true, 

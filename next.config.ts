@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // 方案 A：處理舊版 WordPress 路徑的重定向，修復 404 報錯並引導流量回商店
+      // 處理舊版 WordPress 路徑的重定向
       {
         source: '/wp-content/:path*',
         destination: '/shop',
@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
         destination: '/shop',
         permanent: true,
       },
-      // 額外加固：處理舊版 Odoo 路徑的重定向 (例如 /web/static, /web/image)
+      // 處理舊版 Odoo 路徑的重定向
       {
         source: '/web/:path*',
         destination: '/shop',
@@ -75,26 +75,6 @@ const nextConfig: NextConfig = {
       {
         source: '/wishlist',
         destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/admin/pos',
-        destination: '/pos',
-        permanent: true,
-      },
-      {
-        source: '/api/catalog/feed',
-        destination: '/api/catalog/feed.csv',
-        permanent: true,
-      },
-      {
-        source: '/api/catalog/local-inventory',
-        destination: '/api/catalog/local-inventory.csv',
-        permanent: true,
-      },
-      {
-        source: '/api/catalog/promotions',
-        destination: '/api/catalog/promotions.csv',
         permanent: true,
       },
     ];

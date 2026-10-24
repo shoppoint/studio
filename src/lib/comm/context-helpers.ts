@@ -1,13 +1,14 @@
 /**
- * @fileOverview 通訊系統上下文輔助工具 (Context Helpers) - 強化版
- * 修正：優化 Regex 以確保 {{{itemsTable}}} 等多層括號變數能被精確識別並替換。
+ * @fileOverview 通訊系統上下文輔助工具 (Context Helpers) - 強化版 (V5)
+ * 修正：優化 Regex 以確保 {{key}} 與 {{{key}}} (HTML) 都能被精確識別並替換。
  */
 
 import { format } from "date-fns";
 import { 
   AREA_NAME_MAP, 
   DISTRICT_NAME_MAP, 
-  SUB_DISTRICT_NAME_MAP 
+  SUB_DISTRICT_NAME_MAP,
+  COUNTRY_NAME_MAP
 } from "../address-data";
 
 /**
@@ -15,12 +16,12 @@ import {
  */
 const SHIPPING_METHOD_MAP: Record<string, Record<string, string>> = {
   zh: {
-    sf_locker: "順豐站／智能櫃 (SF Station/Locker)",
-    hk_post: "香港郵政智易取 (HK Post iPostal)",
-    sf_direct: "順豐速遞 (直送) (SF Direct)",
-    home_delivery: "宅配直送 (Home Delivery)",
-    pickup: "門市自取 (In-store Pickup)",
-    standard: "標準配送 (Standard Shipping)"
+    sf_locker: "順豐站／智能櫃",
+    hk_post: "香港郵政智易取",
+    sf_direct: "順豐速遞 (直送)",
+    home_delivery: "宅配直送",
+    pickup: "門市自取",
+    standard: "標準配送"
   },
   en: {
     sf_locker: "SF Station / Locker",
@@ -50,7 +51,7 @@ export function formatAddress(addr: any): string {
   if (addr.district) regionParts.push(DISTRICT_NAME_MAP[addr.district] || String(addr.district));
   if (addr.area) regionParts.push(AREA_NAME_MAP[addr.area] || String(addr.area));
   if (regionParts.length > 0) parts.push(regionParts.filter(Boolean).join(", "));
-  if (addr.country && addr.country !== "Hong Kong") parts.push(String(addr.country));
+  if (addr.country && addr.country !== "Hong Kong") parts.push(COUNTRY_NAME_MAP[addr.country] || String(addr.country));
   return parts.filter(p => p && p.trim() !== "").join("<br/>") || "---";
 }
 
@@ -59,16 +60,15 @@ export function formatAddress(addr: any): string {
  */
 export function generateItemsTable(items: any[], lang: string): string {
   if (!items || !Array.isArray(items) || items.length === 0) return "";
-  const isEn = lang === 'en';
+  const isEn = lang.startsWith('en');
   const visibleItems = items.filter(it => !it.isInternalGift);
   if (visibleItems.length === 0) return "";
 
   const rows = visibleItems.map(item => {
     const p = Number(item.price) || 0;
     const q = Number(item.qty) || 0;
-    const d = item.discountType === 'percent' ? (p * (Number(item.discount) || 0) / 100) : (Number(item.discount) || 0);
-    const adj = Number(item.adjustment) || 0;
-    const total = ((p - d) * q) + adj;
+    const discAmt = item.discountType === 'percent' ? (p * (Number(item.discount) || 0) / 100) : (Number(item.discount) || 0);
+    const rowTotal = ((p - discAmt) * q) + (Number(item.adjustment) || 0);
 
     return `
       <tr>
@@ -77,7 +77,7 @@ export function generateItemsTable(items: any[], lang: string): string {
           <div style="font-size: 10px; color: #a0aec0; margin-top: 2px;">SKU: ${item.sku || "--"}</div>
         </td>
         <td style="padding: 12px 10px; border-bottom: 1px solid #edf2f7; text-align: center; font-size: 13px;">${q}</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #edf2f7; text-align: right; font-size: 13px; font-weight: 900; color: #1a202c;">$${total.toFixed(1)}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #edf2f7; text-align: right; font-size: 13px; font-weight: 900; color: #1a202c;">$${rowTotal.toFixed(1)}</td>
       </tr>`;
   }).join('');
 
@@ -99,7 +99,7 @@ export function generateItemsTable(items: any[], lang: string): string {
  */
 export function replaceVariables(text: any, context: Record<string, any>): string {
   if (typeof text !== 'string') return "";
-  // 修正 Regex: 支援雙重或三重括號，並確保正確捕捉鍵名
+  // 核心修正：使用非貪婪匹配並處理三括號 (HTML 不轉義)
   return text.replace(/\{\{\{?([^{}]+?)\}\}\}?/g, (match, key) => {
     const cleanKey = key.trim();
     if (context[cleanKey] !== undefined && context[cleanKey] !== null) {
@@ -109,9 +109,6 @@ export function replaceVariables(text: any, context: Record<string, any>): strin
   });
 }
 
-/**
- * 生成全方位通知上下文
- */
 export function getNotificationContext(data: any, genConfig: any, lang: any): Record<string, any> {
   const langStr = String(lang || 'zh-HK').toLowerCase();
   const isEn = langStr.startsWith('en');
@@ -119,7 +116,7 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
   const tz = genConfig?.timezone || 'Asia/Hong_Kong';
   
   const map = SHIPPING_METHOD_MAP[lKey] || SHIPPING_METHOD_MAP["zh"];
-  const resolvedMethodName = map[data.shippingMethodId] || data.shippingMethodName || "標準配送";
+  const resolvedMethodName = map[data.shippingMethodId] || data.shippingMethodName || (isEn ? "Standard Shipping" : "標準配送");
 
   let pickupLocation = data.pickupLocation || "--";
   if (data.selectedPoint) {
@@ -139,7 +136,6 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
   const discountValue = Number(data.discountAmount || data.orderDiscount || 0);
   const totalValue = Number(data.total || (subtotalValue + shippingFeeValue - discountValue));
 
-  // 建立純文字產品清單供站內通知使用
   const itemsList = (data.items || []).filter((it: any) => !it.isInternalGift).map((it: any) => `- ${it.name} x${it.qty}`).join('\n');
 
   return {
@@ -152,7 +148,7 @@ export function getNotificationContext(data: any, genConfig: any, lang: any): Re
     discountAmount: discountValue.toFixed(1),
     totalAmount: totalValue.toFixed(1),
     shippingMethod: String(resolvedMethodName),
-    trackingNo: String(data.trackingNo || (isEn ? "Pending" : "待發貨")),
+    trackingNo: String(data.trackingNo || (isEn ? "Awaiting Dispatch" : "待發貨")),
     pickupLocation: String(pickupLocation),
     shippingAddress: formatAddress(data.shippingAddress || data.billingAddress),
     billingAddress: formatAddress(data.billingAddress || data.shippingAddress),
